@@ -5,8 +5,8 @@ import (
 	"github.com/docker/distribution/context"
 	"github.com/docker/distribution/digest"
 
+	imageapiv1 "github.com/openshift/api/image/v1"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
 )
 
 // pullthroughManifestService wraps a distribution.ManifestService

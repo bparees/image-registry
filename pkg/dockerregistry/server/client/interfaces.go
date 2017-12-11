@@ -6,7 +6,7 @@ import (
 	kapiv1 "k8s.io/kubernetes/pkg/api/v1"
 	kcoreclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/internalversion"
 
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	imageapiv1 "github.com/openshift/api/image/v1"
 	userapiv1 "github.com/openshift/origin/pkg/user/apis/user/v1"
 	authclientv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	authapiv1 "k8s.io/kubernetes/pkg/apis/authorization/v1"
