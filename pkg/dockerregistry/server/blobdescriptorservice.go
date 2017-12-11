@@ -15,8 +15,8 @@ import (
 
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 
+	imageapiv1 "github.com/openshift/api/image/v1"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
 )
 
 const (
