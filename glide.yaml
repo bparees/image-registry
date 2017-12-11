@@ -13,6 +13,9 @@ import:
 - package: k8s.io/kubernetes
   version: release-1.7.6
   repo: git@github.com:openshift/kubernetes
+- package: k8s.io/api
+  repo:    git@github.com:openshift/kubernetes-api
+  version: release-1.7.6
 - package: k8s.io/apimachinery
   version: release-1.7.6
   repo: git@github.com:openshift/kubernetes-apimachinery
