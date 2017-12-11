@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 
 	"github.com/golang/glog"
-	"k8s.io/kubernetes/pkg/kubelet/dockershim/errors"
 	hashutil "k8s.io/kubernetes/pkg/util/hash"
 )
 
@@ -50,6 +49,7 @@ type PortMapping struct {
 // CheckpointData contains all types of data that can be stored in the checkpoint.
 type CheckpointData struct {
 	PortMappings []*PortMapping `json:"port_mappings,omitempty"`
+	HostNetwork  bool           `json:"host_network,omitempty"`
 }
 
 // PodSandboxCheckpoint is the checkpoint structure for a sandbox
@@ -110,12 +110,14 @@ func (handler *PersistentCheckpointHandler) GetCheckpoint(podSandboxID string) (
 	//TODO: unmarhsal into a struct with just Version, check version, unmarshal into versioned type.
 	err = json.Unmarshal(blob, &checkpoint)
 	if err != nil {
-		glog.Errorf("Failed to unmarshal checkpoint %q. Checkpoint content: %q. ErrMsg: %v", podSandboxID, string(blob), err)
-		return &checkpoint, errors.CorruptCheckpointError
+		glog.Errorf("Failed to unmarshal checkpoint %q, removing checkpoint. Checkpoint content: %q. ErrMsg: %v", podSandboxID, string(blob), err)
+		handler.RemoveCheckpoint(podSandboxID)
+		return nil, fmt.Errorf("failed to unmarshal checkpoint")
 	}
 	if checkpoint.CheckSum != calculateChecksum(checkpoint) {
-		glog.Errorf("Checksum of checkpoint %q is not valid", podSandboxID)
-		return &checkpoint, errors.CorruptCheckpointError
+		glog.Errorf("Checksum of checkpoint %q is not valid, removing checkpoint", podSandboxID)
+		handler.RemoveCheckpoint(podSandboxID)
+		return nil, fmt.Errorf("checkpoint is corrupted")
 	}
 	return &checkpoint, nil
 }

@@ -36,6 +36,7 @@ import (
 	etcd "github.com/coreos/etcd/client"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/etcdserver"
+	"github.com/coreos/etcd/etcdserver/api/etcdhttp"
 	"github.com/coreos/etcd/etcdserver/api/v2http"
 	"github.com/coreos/etcd/integration"
 	"github.com/coreos/etcd/pkg/testutil"
@@ -193,7 +194,7 @@ func (m *EtcdTestServer) launch(t *testing.T) error {
 	}
 	m.s.SyncTicker = time.NewTicker(500 * time.Millisecond)
 	m.s.Start()
-	m.raftHandler = &testutil.PauseableHandler{Next: v2http.NewPeerHandler(m.s)}
+	m.raftHandler = &testutil.PauseableHandler{Next: etcdhttp.NewPeerHandler(m.s)}
 	for _, ln := range m.PeerListeners {
 		hs := &httptest.Server{
 			Listener: ln,
@@ -323,6 +324,7 @@ func NewUnsecuredEtcd3TestClientServer(t *testing.T, scheme *runtime.Scheme) (*E
 		ServerList:               server.V3Client.Endpoints(),
 		DeserializationCacheSize: etcdtest.DeserializationCacheSize,
 		Copier: scheme,
+		Paging: true,
 	}
 	return server, config
 }

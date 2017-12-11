@@ -24,8 +24,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"k8s.io/kubernetes/pkg/kubelet/dockershim/errors"
 )
 
 const (
@@ -76,7 +74,10 @@ func writeFileAndSync(filename string, data []byte, perm os.FileMode) error {
 	if err == nil && n < len(data) {
 		err = io.ErrShortWrite
 	}
-	f.Sync()
+	if err == nil {
+		// Only sync if the Write completed successfully.
+		err = f.Sync()
+	}
 	if err1 := f.Close(); err == nil {
 		err = err1
 	}
@@ -103,7 +104,7 @@ func (fstore *FileStore) Read(key string) ([]byte, error) {
 	}
 	bytes, err := ioutil.ReadFile(fstore.getCheckpointPath(key))
 	if os.IsNotExist(err) {
-		return bytes, errors.CheckpointNotFoundError
+		return bytes, fmt.Errorf("checkpoint is not found.")
 	}
 	return bytes, err
 }
