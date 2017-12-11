@@ -2,6 +2,8 @@ package: github.com/openshift/image-registry
 import:
 - package: github.com/openshift/origin
   version: 1daa267d0a1fdbd0569ce490c904391b4e77c70d
+- package: github.com/openshift/api
+  version: master
 - package: github.com/docker/distribution
   version: image-registry-release-2.6.2
   repo: git@github.com:openshift/docker-distribution
