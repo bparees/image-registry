@@ -6,7 +6,7 @@ import (
 	kcoreclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/internalversion"
 
 	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
-	userclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/user/v1"
+	userclientv1 "github.com/openshift/client-go/user/clientset/versioned/typed/user/v1"
 	"github.com/openshift/image-registry/pkg/origin-common/clientcmd"
 )
 

@@ -15,9 +15,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kapi "k8s.io/kubernetes/pkg/api/v1"
 
+	imagev1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
 	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
-	imagev1 "github.com/openshift/origin/pkg/image/generated/clientset/typed/image/v1"
 
 	"github.com/openshift/image-registry/pkg/testframework"
 )
