@@ -57,3 +57,10 @@ import:
   version: 9bf6e6e569ff057f75d9604a46c52928f17d2b54
 - package: github.com/docker/docker
   version: ^1.13.0
+# pinned because these levels still use Sirupsen instead
+# of sirupsen. Can unpin once we've moved up to a docker-distribution
+# level that uses sirupsen.
+- package: github.com/Azure/go-ansiterm
+  version: 70b2c90b260171e829f1ebd7c17f600c11858dbe  
+- package: github.com/bshuster-repo/logrus-logstash-hook
+  version: 0e6d502573042a6563419fbcce4f284600bfe929
