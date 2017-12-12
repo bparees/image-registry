@@ -8,12 +8,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	templateapiv1 "github.com/openshift/api/template/v1"
 	templateapi "github.com/openshift/origin/pkg/template/apis/template"
 	"github.com/openshift/origin/pkg/templateservicebroker/openservicebroker/api"
 )
 
 func TestServiceFromTemplate(t *testing.T) {
-	template := &templateapi.Template{
+	template := &templateapiv1.Template{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "name",
 			UID:  "ee33151d-a34d-442d-a0ca-6353b73a58fd",
@@ -28,7 +29,7 @@ func TestServiceFromTemplate(t *testing.T) {
 				"openshift.io/support-url":           "supportURL",
 			},
 		},
-		Parameters: []templateapi.Parameter{
+		Parameters: []templateapiv1.Parameter{
 			{
 				Name:     "param1",
 				Required: true,
@@ -135,8 +136,15 @@ func TestServiceFromTemplate(t *testing.T) {
 	}
 
 	template.Annotations["description"] = ""
+	template.Annotations[templateapi.BindableAnnotation] = "False"
 	service = serviceFromTemplate(template)
 	if service.Description != noDescriptionProvided {
 		t.Errorf("service.Description incorrectly set to %q", service.Description)
+	}
+	if service.Bindable {
+		t.Errorf("service.Bindable incorrectly set")
+	}
+	if service.Plans[0].Bindable {
+		t.Errorf("service.Plans[0].Bindable incorrectly set")
 	}
 }

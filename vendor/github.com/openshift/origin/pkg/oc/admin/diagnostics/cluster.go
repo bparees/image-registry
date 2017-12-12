@@ -13,12 +13,12 @@ import (
 
 	appsclient "github.com/openshift/origin/pkg/apps/generated/internalclientset"
 	oauthorizationclient "github.com/openshift/origin/pkg/authorization/generated/internalclientset"
-	osclientcmd "github.com/openshift/origin/pkg/cmd/util/clientcmd"
-	clustdiags "github.com/openshift/origin/pkg/diagnostics/cluster"
-	agldiags "github.com/openshift/origin/pkg/diagnostics/cluster/aggregated_logging"
-	"github.com/openshift/origin/pkg/diagnostics/types"
 	imageclient "github.com/openshift/origin/pkg/image/generated/internalclientset"
 	oauthclient "github.com/openshift/origin/pkg/oauth/generated/internalclientset"
+	clustdiags "github.com/openshift/origin/pkg/oc/admin/diagnostics/diagnostics/cluster"
+	agldiags "github.com/openshift/origin/pkg/oc/admin/diagnostics/diagnostics/cluster/aggregated_logging"
+	"github.com/openshift/origin/pkg/oc/admin/diagnostics/diagnostics/types"
+	osclientcmd "github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	projectclient "github.com/openshift/origin/pkg/project/generated/internalclientset"
 	routeclient "github.com/openshift/origin/pkg/route/generated/internalclientset"
 	securityclient "github.com/openshift/origin/pkg/security/generated/internalclientset"
@@ -106,9 +106,9 @@ func (o DiagnosticsOptions) buildClusterDiagnostics(rawConfig *clientcmdapi.Conf
 		case clustdiags.ClusterRouterName:
 			d = &clustdiags.ClusterRouter{KubeClient: kclusterClient, DCClient: appsClient.Apps()}
 		case clustdiags.ClusterRolesName:
-			d = &clustdiags.ClusterRoles{ClusterRolesClient: oauthorizationClient.ClusterRoles(), SARClient: kclusterClient.Authorization()}
+			d = &clustdiags.ClusterRoles{ClusterRolesClient: oauthorizationClient.Authorization().ClusterRoles(), SARClient: kclusterClient.Authorization()}
 		case clustdiags.ClusterRoleBindingsName:
-			d = &clustdiags.ClusterRoleBindings{ClusterRoleBindingsClient: oauthorizationClient.ClusterRoleBindings(), SARClient: kclusterClient.Authorization()}
+			d = &clustdiags.ClusterRoleBindings{ClusterRoleBindingsClient: oauthorizationClient.Authorization().ClusterRoleBindings(), SARClient: kclusterClient.Authorization()}
 		case clustdiags.MetricsApiProxyName:
 			d = &clustdiags.MetricsApiProxy{KubeClient: kclusterClient}
 		case clustdiags.ServiceExternalIPsName:

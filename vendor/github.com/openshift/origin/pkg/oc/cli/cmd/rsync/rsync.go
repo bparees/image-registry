@@ -13,7 +13,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/cmd/templates"
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	"github.com/openshift/origin/pkg/util/fsnotification"
 )
 
@@ -181,27 +181,38 @@ func (o *RsyncOptions) Complete(f *clientcmd.Factory, cmd *cobra.Command, args [
 		cmd.Help()
 		fallthrough
 	case n < 2:
-		return kcmdutil.UsageError(cmd, "SOURCE_DIR and POD:DESTINATION_DIR are required arguments")
+		return kcmdutil.UsageErrorf(cmd, "SOURCE_DIR and POD:DESTINATION_DIR are required arguments")
 	case n > 2:
-		return kcmdutil.UsageError(cmd, "only SOURCE_DIR and POD:DESTINATION_DIR should be specified as arguments")
+		return kcmdutil.UsageErrorf(cmd, "only SOURCE_DIR and POD:DESTINATION_DIR should be specified as arguments")
 	}
 
-	// Set main command arguments
 	var err error
-	o.Source, err = parsePathSpec(args[0])
-	if err != nil {
-		return err
-	}
-	o.Destination, err = parsePathSpec(args[1])
-	if err != nil {
-		return err
-	}
-
 	namespace, _, err := f.DefaultNamespace()
 	if err != nil {
 		return err
 	}
 	o.Namespace = namespace
+
+	// allow and parse resources specified in the <kind>/<name> format
+	parsedSourcePath, err := resolveResourceKindPath(f, args[0], namespace)
+	if err != nil {
+		return err
+	}
+
+	parsedDestPath, err := resolveResourceKindPath(f, args[1], namespace)
+	if err != nil {
+		return err
+	}
+
+	// Set main command arguments
+	o.Source, err = parsePathSpec(parsedSourcePath)
+	if err != nil {
+		return err
+	}
+	o.Destination, err = parsePathSpec(parsedDestPath)
+	if err != nil {
+		return err
+	}
 
 	o.Strategy, err = o.determineStrategy(f, cmd, o.StrategyName)
 	if err != nil {

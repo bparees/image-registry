@@ -23,9 +23,9 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/cmd/templates"
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
 	imageclient "github.com/openshift/origin/pkg/image/generated/internalclientset/typed/image/internalversion"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 var (
@@ -141,7 +141,7 @@ func (o *VerifyImageSignatureOptions) Validate() error {
 }
 func (o *VerifyImageSignatureOptions) Complete(f *clientcmd.Factory, cmd *cobra.Command, args []string, out io.Writer) error {
 	if len(args) != 1 {
-		return kcmdutil.UsageError(cmd, "exactly one image must be specified")
+		return kcmdutil.UsageErrorf(cmd, "exactly one image must be specified")
 	}
 	o.InputImage = args[0]
 	var err error
@@ -256,7 +256,7 @@ func (o *VerifyImageSignatureOptions) getImageManifest(img *imageapi.Image) ([]b
 	if len(o.RegistryURL) > 0 {
 		registryURL = &url.URL{Host: o.RegistryURL, Scheme: "https"}
 		if o.Insecure {
-			registryURL.Scheme = "http"
+			registryURL.Scheme = ""
 		}
 	}
 	return getImageManifestByIDFromRegistry(registryURL, parsed.RepositoryName(), img.Name, o.CurrentUser, o.CurrentUserToken, o.Insecure)

@@ -34,6 +34,16 @@
 %else
 %global do_build 1
 %endif
+%if 0%{?skip_prep}
+%global do_prep 0
+%else
+%global do_prep 1
+%endif
+%if 0%{?skip_dist}
+%global package_dist %{nil}
+%else
+%global package_dist %{dist}
+%endif
 
 %if 0%{?fedora} || 0%{?epel}
 %global need_redistributable_set 0
@@ -55,11 +65,12 @@
 %global product_name Origin
 %endif
 
+%{!?version: %global version 0.0.1}
+%{!?release: %global release 1}
+
 Name:           %{package_name}
-# Version is not kept up to date and is intended to be set by tito custom
-# builders provided in the .tito/lib directory of this project
-Version:        0.0.1
-Release:        0%{?dist}
+Version:        %{version}
+Release:        %{release}%{package_dist}
 Summary:        Open Source Container Management by Red Hat
 License:        ASL 2.0
 URL:            https://%{import_path}
@@ -163,12 +174,6 @@ BuildRequires:  goversioninfo
 %{summary}
 %endif
 
-%package dockerregistry
-Summary:        Docker Registry v2 for %{product_name}
-
-%description dockerregistry
-%{summary}
-
 %package pod
 Summary:        %{product_name} Pod
 
@@ -234,13 +239,15 @@ of docker.  Exclude those versions of docker.
 %{name}-docker-excluder unexclude - docker packages can be updated
 
 %prep
+%if 0%{do_prep}
 %setup -q
+%endif
 
 %build
 %if 0%{do_build}
 %if 0%{make_redistributable}
 # Create Binaries for all supported arches
-%{os_git_vars} hack/build-cross.sh
+%{os_git_vars} OS_BUILD_RELEASE_ARCHIVES=n make build-cross
 %{os_git_vars} hack/build-go.sh vendor/github.com/onsi/ginkgo/ginkgo
 %{os_git_vars} unset GOPATH; cmd/service-catalog/go/src/github.com/kubernetes-incubator/service-catalog/hack/build-cross.sh
 %{os_git_vars} unset GOPATH; cmd/cluster-capacity/go/src/github.com/kubernetes-incubator/cluster-capacity/hack/build-cross.sh
@@ -261,7 +268,7 @@ of docker.  Exclude those versions of docker.
 %ifarch s390x
   BUILD_PLATFORM="linux/s390x"
 %endif
-OS_ONLY_BUILD_PLATFORMS="${BUILD_PLATFORM}" %{os_git_vars} hack/build-cross.sh
+OS_ONLY_BUILD_PLATFORMS="${BUILD_PLATFORM}" %{os_git_vars} OS_BUILD_RELEASE_ARCHIVES=n make build-cross
 OS_ONLY_BUILD_PLATFORMS="${BUILD_PLATFORM}" %{os_git_vars} hack/build-go.sh vendor/github.com/onsi/ginkgo/ginkgo
 OS_ONLY_BUILD_PLATFORMS="${BUILD_PLATFORM}" %{os_git_vars} unset GOPATH; cmd/service-catalog/go/src/github.com/kubernetes-incubator/service-catalog/hack/build-cross.sh
 OS_ONLY_BUILD_PLATFORMS="${BUILD_PLATFORM}" %{os_git_vars} unset GOPATH; cmd/cluster-capacity/go/src/github.com/kubernetes-incubator/cluster-capacity/hack/build-cross.sh
@@ -277,7 +284,7 @@ PLATFORM="$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
 install -d %{buildroot}%{_bindir}
 
 # Install linux components
-for bin in oc openshift dockerregistry kubefed template-service-broker
+for bin in oc openshift kubefed template-service-broker
 do
   echo "+++ INSTALLING ${bin}"
   install -p -m 755 _output/local/bin/${PLATFORM}/${bin} %{buildroot}%{_bindir}/${bin}
@@ -314,13 +321,6 @@ install -d -m 0755 %{buildroot}%{_unitdir}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 
 for cmd in \
-    kube-apiserver \
-    kube-controller-manager \
-    kube-proxy \
-    kube-scheduler \
-    kubelet \
-    kubernetes \
-    oadm \
     openshift-deploy \
     openshift-docker-build \
     openshift-sti-build \
@@ -377,7 +377,7 @@ install -p -m 0644 contrib/systemd/openshift-sdn-ovs.conf %{buildroot}%{_unitdir
 
 # Install bash completions
 install -d -m 755 %{buildroot}%{_sysconfdir}/bash_completion.d/
-for bin in oadm oc openshift
+for bin in oc openshift
 do
   echo "+++ INSTALLING BASH COMPLETIONS FOR ${bin} "
   %{buildroot}%{_bindir}/${bin} completion bash > %{buildroot}%{_sysconfdir}/bash_completion.d/${bin}
@@ -398,7 +398,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/sbin
 
 # Install openshift-excluder script
 sed "s|@@CONF_FILE-VARIABLE@@|${OS_CONF_FILE}|" contrib/excluder/excluder-template > $RPM_BUILD_ROOT/usr/sbin/%{name}-excluder
-sed -i "s|@@PACKAGE_LIST-VARIABLE@@|%{name} %{name}-clients %{name}-clients-redistributable %{name}-dockerregistry %{name}-master %{name}-node %{name}-pod %{name}-recycle %{name}-sdn-ovs %{name}-tests tuned-profiles-%{name}-node|" $RPM_BUILD_ROOT/usr/sbin/%{name}-excluder
+sed -i "s|@@PACKAGE_LIST-VARIABLE@@|%{name} %{name}-clients %{name}-clients-redistributable %{name}-master %{name}-node %{name}-pod %{name}-recycle %{name}-sdn-ovs %{name}-tests tuned-profiles-%{name}-node|" $RPM_BUILD_ROOT/usr/sbin/%{name}-excluder
 chmod 0744 $RPM_BUILD_ROOT/usr/sbin/%{name}-excluder
 
 # Install docker-excluder script
@@ -414,13 +414,7 @@ install -p -m 755 contrib/migration/* %{buildroot}%{_datadir}/%{name}/migration/
 %doc README.md
 %license LICENSE
 %{_bindir}/openshift
-%{_bindir}/kube-apiserver
-%{_bindir}/kube-controller-manager
-%{_bindir}/kube-proxy
-%{_bindir}/kube-scheduler
-%{_bindir}/kubelet
-%{_bindir}/kubernetes
-%{_bindir}/oadm
+%{_bindir}/hyperkube
 %{_bindir}/openshift-deploy
 %{_bindir}/openshift-f5-router
 %{_bindir}/openshift-recycle
@@ -432,13 +426,11 @@ install -p -m 755 contrib/migration/* %{buildroot}%{_datadir}/%{name}/migration/
 %{_bindir}/openshift-manage-dockerfile
 %{_bindir}/origin
 %{_sharedstatedir}/origin
-%{_sysconfdir}/bash_completion.d/oadm
 %{_sysconfdir}/bash_completion.d/openshift
 %defattr(-,root,root,0700)
 %dir %config(noreplace) %{_sysconfdir}/origin
 %ghost %dir %config(noreplace) %{_sysconfdir}/origin
 %ghost %config(noreplace) %{_sysconfdir}/origin/.config_managed
-%{_mandir}/man1/oadm*
 %{_mandir}/man1/openshift*
 
 %pre
@@ -465,33 +457,33 @@ fi
 %{_datadir}/%{name}/migration/*
 %defattr(-,root,root,0700)
 %config(noreplace) %{_sysconfdir}/origin/master
-%ghost %config(noreplace) %{_sysconfdir}/origin/admin.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/admin.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/admin.kubeconfig
-%ghost %config(noreplace) %{_sysconfdir}/origin/ca.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/ca.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/ca.serial.txt
-%ghost %config(noreplace) %{_sysconfdir}/origin/etcd.server.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/etcd.server.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/master-config.yaml
-%ghost %config(noreplace) %{_sysconfdir}/origin/master.etcd-client.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/master.etcd-client.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/master.kubelet-client.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/master.kubelet-client.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/master.server.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/master.server.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-master.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-master.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-master.kubeconfig
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-registry.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-registry.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-registry.kubeconfig
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-router.crt
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-router.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/openshift-router.kubeconfig
-%ghost %config(noreplace) %{_sysconfdir}/origin/policy.json
-%ghost %config(noreplace) %{_sysconfdir}/origin/serviceaccounts.private.key
-%ghost %config(noreplace) %{_sysconfdir}/origin/serviceaccounts.public.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/admin.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/admin.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/admin.kubeconfig
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/ca.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/ca.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/ca.serial.txt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/etcd.server.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/etcd.server.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/master-config.yaml
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/master.etcd-client.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/master.etcd-client.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/master.kubelet-client.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/master.kubelet-client.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/master.server.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/master.server.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-master.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-master.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-master.kubeconfig
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-registry.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-registry.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-registry.kubeconfig
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-router.crt
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-router.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/openshift-router.kubeconfig
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/policy.json
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/serviceaccounts.private.key
+%ghost %config(noreplace) %{_sysconfdir}/origin/master/serviceaccounts.public.key
 %ghost %config(noreplace) %{_sysconfdir}/origin/.config_managed
 
 %post master
@@ -595,9 +587,6 @@ fi
 %{_datadir}/%{name}/windows/oc.exe
 %endif
 
-%files dockerregistry
-%{_bindir}/dockerregistry
-
 %files pod
 %{_bindir}/pod
 
@@ -653,6 +642,9 @@ fi
 %{_bindir}/hyperkube
 
 %changelog
+* Wed Jul 12 2017 Steve Milner <smilner@redhat.com> 0.2-10
+- Master config files moved to /etc/origin/master/ BZ#1469034.
+
 * Fri Sep 18 2015 Scott Dodson <sdodson@redhat.com> 0.2-9
 - Rename from openshift -> origin
 - Symlink /var/lib/origin to /var/lib/openshift if /var/lib/openshift exists

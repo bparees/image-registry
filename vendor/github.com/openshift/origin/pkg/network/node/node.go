@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	osexec "os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -16,6 +15,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/vishvananda/netlink"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -23,7 +23,6 @@ import (
 	kubeutilnet "k8s.io/apimachinery/pkg/util/net"
 	kwait "k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/tools/record"
 	kapi "k8s.io/kubernetes/pkg/api"
 	kapihelper "k8s.io/kubernetes/pkg/api/helper"
@@ -32,10 +31,9 @@ import (
 	kinternalinformers "k8s.io/kubernetes/pkg/client/informers/informers_generated/internalversion"
 	kubeletapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	kruntimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
-	dockertools "k8s.io/kubernetes/pkg/kubelet/dockershim/libdocker"
 	knetwork "k8s.io/kubernetes/pkg/kubelet/network"
 	ktypes "k8s.io/kubernetes/pkg/kubelet/types"
-	kexec "k8s.io/kubernetes/pkg/util/exec"
+	kexec "k8s.io/utils/exec"
 
 	"github.com/openshift/origin/pkg/network"
 	networkapi "github.com/openshift/origin/pkg/network/apis/network"
@@ -108,8 +106,6 @@ type OsdnNode struct {
 
 	host             knetwork.Host
 	kubeletCniPlugin knetwork.NetworkPlugin
-
-	clearLbr0IptablesRule bool
 
 	kubeInformers kinternalinformers.SharedInformerFactory
 
@@ -187,10 +183,6 @@ func New(c *OsdnNodeConfig) (network.NodeInterface, error) {
 		runtimeService: nil,
 	}
 
-	if err := plugin.dockerPreCNICleanup(); err != nil {
-		return nil, err
-	}
-
 	RegisterMetrics()
 
 	return plugin, nil
@@ -222,83 +214,45 @@ func (c *OsdnNodeConfig) setNodeIP() error {
 		}
 	}
 
-	if _, _, err := common.GetLinkDetails(c.SelfIP); err != nil {
-		if err == common.ErrorNetworkInterfaceNotFound {
-			return fmt.Errorf("node IP %q is not a local/private address (hostname %q)", c.SelfIP, c.Hostname)
-		} else {
-			return err
+	if _, _, err := GetLinkDetails(c.SelfIP); err != nil {
+		if err == ErrorNetworkInterfaceNotFound {
+			err = fmt.Errorf("node IP %q is not a local/private address (hostname %q)", c.SelfIP, c.Hostname)
 		}
+		glog.Errorf("Unable to find network interface for node IP; some features will not work! (%v)", err)
 	}
 
 	return nil
 }
 
-// Detect whether we are upgrading from a pre-CNI openshift and clean up
-// interfaces and iptables rules that are no longer required
-func (node *OsdnNode) dockerPreCNICleanup() error {
-	l, err := netlink.LinkByName("lbr0")
+var (
+	ErrorNetworkInterfaceNotFound = fmt.Errorf("could not find network interface")
+)
+
+func GetLinkDetails(ip string) (netlink.Link, *net.IPNet, error) {
+	links, err := netlink.LinkList()
 	if err != nil {
-		// no cleanup required
-		return nil
-	}
-	_ = netlink.LinkSetDown(l)
-
-	node.clearLbr0IptablesRule = true
-
-	// Restart docker to kill old pods and make it use docker0 again.
-	// "systemctl restart" will bail out (unnecessarily) in the
-	// OpenShift-in-a-container case, so we work around that by sending
-	// the messages by hand.
-	if _, err := osexec.Command("dbus-send", "--system", "--print-reply", "--reply-timeout=2000", "--type=method_call", "--dest=org.freedesktop.systemd1", "/org/freedesktop/systemd1", "org.freedesktop.systemd1.Manager.Reload").CombinedOutput(); err != nil {
-		glog.Error(err)
-	}
-	if _, err := osexec.Command("dbus-send", "--system", "--print-reply", "--reply-timeout=2000", "--type=method_call", "--dest=org.freedesktop.systemd1", "/org/freedesktop/systemd1", "org.freedesktop.systemd1.Manager.RestartUnit", "string:'docker.service' string:'replace'").CombinedOutput(); err != nil {
-		glog.Error(err)
+		return nil, nil, err
 	}
 
-	// Delete pre-CNI interfaces
-	for _, intf := range []string{"lbr0", "vovsbr", "vlinuxbr"} {
-		l, err = netlink.LinkByName(intf)
+	for _, link := range links {
+		addrs, err := netlink.AddrList(link, netlink.FAMILY_V4)
 		if err != nil {
-			_ = netlink.LinkDel(l)
+			glog.Warningf("Could not get addresses of interface %q: %v", link.Attrs().Name, err)
+			continue
+		}
+
+		for _, addr := range addrs {
+			if addr.IP.String() == ip {
+				_, ipNet, err := net.ParseCIDR(addr.IPNet.String())
+				if err != nil {
+					return nil, nil, fmt.Errorf("could not parse CIDR network from address %q: %v", ip, err)
+				}
+				return link, ipNet, nil
+			}
 		}
 	}
 
-	// Wait until docker has restarted since kubelet will exit if docker isn't running
-	if _, err := ensureDockerClient(); err != nil {
-		return err
-	}
-
-	glog.Infof("Cleaned up left-over openshift-sdn docker bridge and interfaces")
-
-	return nil
-}
-
-func ensureDockerClient() (dockertools.Interface, error) {
-	endpoint := os.Getenv("DOCKER_HOST")
-	if endpoint == "" {
-		endpoint = "unix:///var/run/docker.sock"
-	}
-	dockerClient := dockertools.ConnectToDockerOrDie(endpoint, time.Minute, time.Minute)
-
-	// Wait until docker has restarted since kubelet will exit it docker isn't running
-	err := kwait.ExponentialBackoff(
-		kwait.Backoff{
-			Duration: 100 * time.Millisecond,
-			Factor:   1.2,
-			Steps:    6,
-		},
-		func() (bool, error) {
-			if _, err := dockerClient.Version(); err != nil {
-				// wait longer
-				return false, nil
-			}
-			return true, nil
-		})
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to docker: %v", err)
-	}
-	return dockerClient, nil
+	return nil, nil, ErrorNetworkInterfaceNotFound
 }
 
 func (node *OsdnNode) killUpdateFailedPods(pods []kapi.Pod) error {

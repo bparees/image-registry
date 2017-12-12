@@ -17,7 +17,7 @@ import (
 	units "github.com/docker/go-units"
 	deployapi "github.com/openshift/origin/pkg/apps/apis/apps"
 	deployutil "github.com/openshift/origin/pkg/apps/util"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	"github.com/spf13/cobra"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	kapi "k8s.io/kubernetes/pkg/api"
@@ -72,7 +72,7 @@ func NewCmdRolloutCancel(fullName string, f *clientcmd.Factory, out io.Writer) *
 
 func (o *CancelOptions) Complete(f *clientcmd.Factory, cmd *cobra.Command, out io.Writer, args []string) error {
 	if len(args) == 0 && len(o.FilenameOptions.Filenames) == 0 {
-		return kcmdutil.UsageError(cmd, cmd.Use)
+		return kcmdutil.UsageErrorf(cmd, cmd.Use)
 	}
 
 	o.Mapper, o.Typer = f.Object()

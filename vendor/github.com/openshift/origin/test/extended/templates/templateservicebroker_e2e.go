@@ -9,6 +9,7 @@ import (
 	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
 
+	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,16 +17,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/authentication/user"
 	kapi "k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/v1"
 	rbacapi "k8s.io/kubernetes/pkg/apis/rbac"
 	"k8s.io/kubernetes/test/e2e/framework"
 
+	templateapiv1 "github.com/openshift/api/template/v1"
 	authorizationapi "github.com/openshift/origin/pkg/authorization/apis/authorization"
 	configapi "github.com/openshift/origin/pkg/cmd/server/api"
 	"github.com/openshift/origin/pkg/cmd/server/bootstrappolicy"
 	"github.com/openshift/origin/pkg/config/cmd"
 	templateapi "github.com/openshift/origin/pkg/template/apis/template"
-	templateapiv1 "github.com/openshift/origin/pkg/template/apis/template/v1"
 	"github.com/openshift/origin/pkg/template/client/internalversion"
 	"github.com/openshift/origin/pkg/templateservicebroker/openservicebroker/api"
 	"github.com/openshift/origin/pkg/templateservicebroker/openservicebroker/client"
@@ -64,7 +64,7 @@ var _ = g.Describe("[Conformance][templates] templateservicebroker end-to-end te
 		cliUser = &user.DefaultInfo{Name: cli.Username(), Groups: []string{"system:authenticated"}}
 
 		// should have been created before the extended test runs
-		template, err = cli.TemplateClient().Template().Templates("openshift").Get("cakephp-mysql-example", metav1.GetOptions{})
+		template, err = cli.TemplateClient().Template().Templates("openshift").Get("mysql-ephemeral", metav1.GetOptions{})
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		processedtemplate, err = internalversion.NewTemplateProcessorClient(cli.AdminTemplateClient().Template().RESTClient(), "openshift").Process(template)
@@ -155,17 +155,17 @@ var _ = g.Describe("[Conformance][templates] templateservicebroker end-to-end te
 				Namespace: cli.Namespace(),
 			},
 			Parameters: map[string]string{
-				"DATABASE_USER": "test",
+				"MYSQL_USER": "test",
 			},
 		})
 		if err != nil {
 			templateInstance, err := cli.TemplateClient().Template().TemplateInstances(cli.Namespace()).Get(instanceID, metav1.GetOptions{})
 			if err != nil {
-				fmt.Fprintf(g.GinkgoWriter, "error getting TemplateInstance after failed provision: %v", err)
+				fmt.Fprintf(g.GinkgoWriter, "error getting TemplateInstance after failed provision: %v\n", err)
 			} else {
 				err := dumpObjectReadiness(cli, templateInstance)
 				if err != nil {
-					fmt.Fprintf(g.GinkgoWriter, "error running dumpObjectReadiness: %v", err)
+					fmt.Fprintf(g.GinkgoWriter, "error running dumpObjectReadiness: %v\n", err)
 				}
 			}
 		}
@@ -237,10 +237,10 @@ var _ = g.Describe("[Conformance][templates] templateservicebroker end-to-end te
 		}))
 		o.Expect(secret.Type).To(o.Equal(v1.SecretTypeOpaque))
 		o.Expect(secret.Data).To(o.Equal(map[string][]byte{
-			"DATABASE_USER": []byte("test"),
+			"MYSQL_USER": []byte("test"),
 		}))
 
-		examplesecret, err := cli.KubeClient().CoreV1().Secrets(cli.Namespace()).Get("cakephp-mysql-example", metav1.GetOptions{})
+		examplesecret, err := cli.KubeClient().CoreV1().Secrets(cli.Namespace()).Get("mysql", metav1.GetOptions{})
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		o.Expect(examplesecret.OwnerReferences).To(o.ContainElement(metav1.OwnerReference{
@@ -268,7 +268,7 @@ var _ = g.Describe("[Conformance][templates] templateservicebroker end-to-end te
 		o.Expect(brokerTemplateInstance.Spec.BindingIDs).To(o.Equal([]string{bindingID}))
 
 		o.Expect(bind.Credentials).To(o.HaveKey("uri"))
-		o.Expect(bind.Credentials["uri"]).To(o.HavePrefix("http://"))
+		o.Expect(bind.Credentials["uri"]).To(o.HavePrefix("mysql://"))
 	}
 
 	unbind := func() {

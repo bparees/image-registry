@@ -460,6 +460,8 @@ function get-network-plugin() {
     echo "${ovn_plugin}"
   elif [[ "${plugin}" = "cni" ]]; then
     echo "cni"
+  elif [[ "${plugin}" = "none" ]]; then
+    echo ""
   elif [[ -n "${plugin}" ]]; then
     >&2 echo "Invalid network plugin: ${plugin}"
     exit 1
@@ -485,6 +487,7 @@ function copy-runtime() {
   local target=$2
 
   cp "$(os::util::find::built_binary openshift)" "${target}"
+  cp "$(os::util::find::built_binary oc)" "${target}"
   cp "$(os::util::find::built_binary host-local)" "${target}"
   cp "$(os::util::find::built_binary loopback)" "${target}"
   cp "$(os::util::find::built_binary sdn-cni-plugin)" "${target}/openshift-sdn"
@@ -826,7 +829,7 @@ Commands:
 
 start accepts the following options:
 
- -n [net plugin]   the name of the network plugin to deploy
+ -n [net plugin]   the name of the network plugin to deploy (or "none" for none)
  -N                number of nodes in the cluster
  -b                build origin before starting the cluster
  -c [runtime name] use the specified container runtime instead of dockershim (eg, "crio")

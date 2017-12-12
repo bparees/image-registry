@@ -193,6 +193,10 @@ func DefaultMasterOptionsWithTweaks(startEtcd, useDefaultPort bool) (*configapi.
 		return nil, err
 	}
 
+	if masterConfig.AdmissionConfig.PluginConfig == nil {
+		masterConfig.AdmissionConfig.PluginConfig = make(map[string]configapi.AdmissionPluginConfig)
+	}
+
 	if masterConfig.EtcdConfig != nil {
 		addr, err := FindAvailableBindAddress(10000, 29999)
 		if err != nil {
@@ -209,7 +213,6 @@ func DefaultMasterOptionsWithTweaks(startEtcd, useDefaultPort bool) (*configapi.
 		masterConfig.EtcdClientInfo.URLs = []string{"https://" + masterConfig.EtcdConfig.Address}
 	}
 
-	masterConfig.DisableOpenAPI = true
 	masterConfig.ImagePolicyConfig.ScheduledImageImportMinimumIntervalSeconds = 1
 	allowedRegistries := append(
 		*configapi.DefaultAllowedRegistriesForImport,
@@ -315,8 +318,6 @@ func DefaultAllInOneOptions() (*configapi.MasterConfig, *configapi.NodeConfig, *
 	if err != nil {
 		return nil, nil, nil, err
 	}
-
-	masterConfig.DisableOpenAPI = true
 
 	if masterConfig.EtcdConfig != nil {
 		addr, err := FindAvailableBindAddress(10000, 29999)

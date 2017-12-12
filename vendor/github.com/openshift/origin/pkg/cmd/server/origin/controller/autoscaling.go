@@ -2,12 +2,12 @@ package controller
 
 import (
 	clientgoclientset "k8s.io/client-go/kubernetes"
-	kubeclientset "k8s.io/kubernetes/pkg/client/clientset_generated/clientset"
+	kubeclientset "k8s.io/client-go/kubernetes"
 	hpacontroller "k8s.io/kubernetes/pkg/controller/podautoscaler"
 	hpametrics "k8s.io/kubernetes/pkg/controller/podautoscaler/metrics"
 
+	appstypedclient "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"
 	appsv1client "github.com/openshift/origin/pkg/apps/client/v1"
-	appstypedclient "github.com/openshift/origin/pkg/apps/generated/clientset/typed/apps/v1"
 	"github.com/openshift/origin/pkg/cmd/server/bootstrappolicy"
 )
 

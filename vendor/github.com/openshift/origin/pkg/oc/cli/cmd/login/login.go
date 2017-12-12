@@ -14,11 +14,11 @@ import (
 	kclientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/templates"
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
-	"k8s.io/kubernetes/pkg/util/term"
+	"k8s.io/kubernetes/pkg/kubectl/util/term"
 
 	"github.com/openshift/origin/pkg/cmd/flagtypes"
-	osclientcmd "github.com/openshift/origin/pkg/cmd/util/clientcmd"
 	"github.com/openshift/origin/pkg/oc/cli/config"
+	osclientcmd "github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 var (
@@ -46,10 +46,11 @@ var (
 )
 
 // NewCmdLogin implements the OpenShift cli login command
-func NewCmdLogin(fullName string, f *osclientcmd.Factory, reader io.Reader, out io.Writer) *cobra.Command {
+func NewCmdLogin(fullName string, f *osclientcmd.Factory, reader io.Reader, out, errOut io.Writer) *cobra.Command {
 	options := &LoginOptions{
 		Reader: reader,
 		Out:    out,
+		ErrOut: errOut,
 	}
 
 	cmds := &cobra.Command{

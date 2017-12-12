@@ -17,13 +17,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	kcache "k8s.io/client-go/tools/cache"
 	kapi "k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/apis/extensions"
+	"k8s.io/kubernetes/pkg/apis/networking"
 	kinternalinformers "k8s.io/kubernetes/pkg/client/informers/informers_generated/internalversion"
-
-	"github.com/vishvananda/netlink"
 )
 
 func HostSubnetToString(subnet *networkapi.HostSubnet) string {
@@ -59,20 +58,18 @@ func ParseNetworkInfo(clusterNetwork []networkapi.ClusterNetworkEntry, serviceNe
 	for _, entry := range clusterNetwork {
 		cidr, err := netutils.ParseCIDRMask(entry.CIDR)
 		if err != nil {
-			_, cidr, err := net.ParseCIDR(entry.CIDR)
+			_, cidr, err = net.ParseCIDR(entry.CIDR)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse ClusterNetwork CIDR %s: %v", entry.CIDR, err)
 			}
 			glog.Errorf("Configured clusterNetworks value %q is invalid; treating it as %q", entry.CIDR, cidr.String())
-			cns = append(cns, ClusterNetwork{ClusterCIDR: cidr, HostSubnetLength: entry.HostSubnetLength})
-		} else {
-			cns = append(cns, ClusterNetwork{ClusterCIDR: cidr, HostSubnetLength: entry.HostSubnetLength})
 		}
+		cns = append(cns, ClusterNetwork{ClusterCIDR: cidr, HostSubnetLength: entry.HostSubnetLength})
 	}
 
 	sn, err := netutils.ParseCIDRMask(serviceNetwork)
 	if err != nil {
-		_, sn, err := net.ParseCIDR(serviceNetwork)
+		_, sn, err = net.ParseCIDR(serviceNetwork)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse ServiceNetwork CIDR %s: %v", serviceNetwork, err)
 		}
@@ -191,7 +188,7 @@ func newEventQueue(client kcache.Getter, resourceName ResourceName, expectedType
 	eventQueue := NewEventQueue(DeletionHandlingMetaNamespaceKeyFunc)
 	// Repopulate event queue every 30 mins
 	// Existing items in the event queue will have watch.Modified event type
-	kcache.NewReflector(lw, expectedType, eventQueue, 30*time.Minute).Run()
+	go kcache.NewReflector(lw, expectedType, eventQueue, 30*time.Minute).Run(wait.NeverStop)
 	return eventQueue
 }
 
@@ -215,7 +212,7 @@ func RunEventQueue(client kcache.Getter, resourceName ResourceName, process Proc
 	case EgressNetworkPolicies:
 		expectedType = &networkapi.EgressNetworkPolicy{}
 	case NetworkPolicies:
-		expectedType = &extensions.NetworkPolicy{}
+		expectedType = &networking.NetworkPolicy{}
 	default:
 		glog.Fatalf("Unknown resource %s during initialization of event queue", resourceName)
 	}
@@ -279,35 +276,4 @@ func RegisterSharedInformerEventHandlers(kubeInformers kinternalinformers.Shared
 			delFunc(obj)
 		},
 	})
-}
-
-var (
-	ErrorNetworkInterfaceNotFound = fmt.Errorf("could not find network interface")
-)
-
-func GetLinkDetails(ip string) (netlink.Link, *net.IPNet, error) {
-	links, err := netlink.LinkList()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for _, link := range links {
-		addrs, err := netlink.AddrList(link, netlink.FAMILY_V4)
-		if err != nil {
-			glog.Warningf("Could not get addresses of interface %q: %v", link.Attrs().Name, err)
-			continue
-		}
-
-		for _, addr := range addrs {
-			if addr.IP.String() == ip {
-				_, ipNet, err := net.ParseCIDR(addr.IPNet.String())
-				if err != nil {
-					return nil, nil, fmt.Errorf("could not parse CIDR network from address %q: %v", ip, err)
-				}
-				return link, ipNet, nil
-			}
-		}
-	}
-
-	return nil, nil, ErrorNetworkInterfaceNotFound
 }

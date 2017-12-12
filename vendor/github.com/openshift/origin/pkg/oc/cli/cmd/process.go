@@ -24,9 +24,9 @@ import (
 	kprinters "k8s.io/kubernetes/pkg/printers"
 
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
 	"github.com/openshift/origin/pkg/generate/app"
 	"github.com/openshift/origin/pkg/oc/cli/describe"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	"github.com/openshift/origin/pkg/template"
 	templateapi "github.com/openshift/origin/pkg/template/apis/template"
 	templatevalidation "github.com/openshift/origin/pkg/template/apis/template/validation"
@@ -125,7 +125,7 @@ func RunProcess(f *clientcmd.Factory, in io.Reader, out, errout io.Writer, cmd *
 		case !isValue && len(templateName) == 0:
 			templateName = s
 		case !isValue && len(templateName) > 0:
-			return kcmdutil.UsageError(cmd, "template name must be specified only once: %s", s)
+			return kcmdutil.UsageErrorf(cmd, "template name must be specified only once: %s", s)
 		}
 	}
 
@@ -146,18 +146,18 @@ func RunProcess(f *clientcmd.Factory, in io.Reader, out, errout io.Writer, cmd *
 		return nil
 	})
 	if len(duplicatedKeys) != 0 {
-		return kcmdutil.UsageError(cmd, fmt.Sprintf("The following parameters were provided more than once: %s", strings.Join(duplicatedKeys.List(), ", ")))
+		return kcmdutil.UsageErrorf(cmd, fmt.Sprintf("The following parameters were provided more than once: %s", strings.Join(duplicatedKeys.List(), ", ")))
 	}
 
 	filename := kcmdutil.GetFlagString(cmd, "filename")
 	if len(templateName) == 0 && len(filename) == 0 {
-		return kcmdutil.UsageError(cmd, "Must pass a filename or name of stored template")
+		return kcmdutil.UsageErrorf(cmd, "Must pass a filename or name of stored template")
 	}
 
 	if kcmdutil.GetFlagBool(cmd, "parameters") {
 		for _, flag := range []string{"value", "param", "labels", "output", "output-version", "raw", "template"} {
 			if f := cmd.Flags().Lookup(flag); f != nil && f.Changed {
-				return kcmdutil.UsageError(cmd, "The --parameters flag does not process the template, can't be used with --%v", flag)
+				return kcmdutil.UsageErrorf(cmd, "The --parameters flag does not process the template, can't be used with --%v", flag)
 			}
 		}
 	}

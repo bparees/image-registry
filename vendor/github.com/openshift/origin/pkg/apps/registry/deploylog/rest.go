@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	kapiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -15,7 +16,6 @@ import (
 	genericrest "k8s.io/apiserver/pkg/registry/generic/rest"
 	"k8s.io/apiserver/pkg/registry/rest"
 	kapi "k8s.io/kubernetes/pkg/api"
-	kapiv1 "k8s.io/kubernetes/pkg/api/v1"
 	kcoreclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/internalversion"
 	"k8s.io/kubernetes/pkg/controller"
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
@@ -221,7 +221,7 @@ func (r *REST) waitForExistingDeployment(namespace, name string) (*kapi.Replicat
 // returnApplicationPodName returns the best candidate pod for the target deployment in order to
 // view its logs.
 func (r *REST) returnApplicationPodName(target *kapi.ReplicationController) (string, error) {
-	selector := labels.Set(target.Spec.Selector).AsSelector()
+	selector := labels.SelectorFromValidatedSet(labels.Set(target.Spec.Selector))
 	sortBy := func(pods []*kapiv1.Pod) sort.Interface { return controller.ByLogging(pods) }
 
 	pod, _, err := kcmdutil.GetFirstPod(r.pn, target.Namespace, selector, r.timeout, sortBy)

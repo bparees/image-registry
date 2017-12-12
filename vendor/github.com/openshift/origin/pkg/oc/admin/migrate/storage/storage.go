@@ -14,8 +14,8 @@ import (
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
 
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
 	"github.com/openshift/origin/pkg/oc/admin/migrate"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 var (
@@ -202,7 +202,11 @@ func (o *MigrateAPIStorageOptions) save(info *resource.Info, reporter migrate.Re
 			Name(info.Name).Do()
 		data, err := get.Raw()
 		if err != nil {
-			return migrate.DefaultRetriable(info, err)
+			// since we have an error, processing the body is safe because we are not going
+			// to send it back to the server.  Thus we can safely call Result.Error().
+			// This is required because we want to make sure we pass an errors.APIStatus so
+			// that DefaultRetriable can correctly determine if the error is safe to retry.
+			return migrate.DefaultRetriable(info, get.Error())
 		}
 		update := info.Client.Put().
 			Resource(info.Mapping.Resource).

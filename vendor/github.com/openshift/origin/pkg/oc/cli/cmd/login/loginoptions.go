@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -18,15 +17,16 @@ import (
 	restclient "k8s.io/client-go/rest"
 	kclientcmd "k8s.io/client-go/tools/clientcmd"
 	kclientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	kterm "k8s.io/kubernetes/pkg/util/term"
+	kterm "k8s.io/kubernetes/pkg/kubectl/util/term"
 
+	"github.com/openshift/origin/pkg/client/config"
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
 	"github.com/openshift/origin/pkg/cmd/util/term"
 	"github.com/openshift/origin/pkg/cmd/util/tokencmd"
 	"github.com/openshift/origin/pkg/oc/cli/cmd/errors"
 	loginutil "github.com/openshift/origin/pkg/oc/cli/cmd/login/util"
-	"github.com/openshift/origin/pkg/oc/cli/config"
+	cliconfig "github.com/openshift/origin/pkg/oc/cli/config"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	cmderr "github.com/openshift/origin/pkg/oc/errors"
 	projectclient "github.com/openshift/origin/pkg/project/generated/internalclientset"
 	userapi "github.com/openshift/origin/pkg/user/apis/user"
@@ -56,6 +56,7 @@ type LoginOptions struct {
 	Config             *restclient.Config
 	Reader             io.Reader
 	Out                io.Writer
+	ErrOut             io.Writer
 
 	// cert data to be used when authenticating
 	CertFile string
@@ -225,13 +226,8 @@ func (o *LoginOptions) gatherAuthInfo() error {
 	clientConfig.KeyFile = o.KeyFile
 	token, err := tokencmd.RequestToken(o.Config, o.Reader, o.Username, o.Password)
 	if err != nil {
-		// if internal error occurs, suggest making sure
-		// client is connecting to the right host:port
-		if statusErr, ok := err.(*kerrors.StatusError); ok {
-			if statusErr.Status().Code == http.StatusInternalServerError {
-				return fmt.Errorf("error: The server was unable to respond - verify you have provided the correct host and port and that the server is currently running.")
-			}
-		}
+		// return error as-is, as method caller expects to check its type
+		fmt.Fprintf(o.ErrOut, "error: %v - %v\n", err, "verify you have provided the correct host and port and that the server is currently running.")
 		return err
 	}
 	clientConfig.BearerToken = token
@@ -352,7 +348,7 @@ func (o *LoginOptions) SaveConfig() (bool, error) {
 		globalExistedBefore = false
 	}
 
-	newConfig, err := config.CreateConfig(o.Project, o.Config)
+	newConfig, err := cliconfig.CreateConfig(o.Project, o.Config)
 	if err != nil {
 		return false, err
 	}
@@ -365,11 +361,11 @@ func (o *LoginOptions) SaveConfig() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if err := config.RelativizeClientConfigPaths(newConfig, baseDir); err != nil {
+	if err := cliconfig.RelativizeClientConfigPaths(newConfig, baseDir); err != nil {
 		return false, err
 	}
 
-	configToWrite, err := config.MergeConfig(*o.StartingKubeConfig, *newConfig)
+	configToWrite, err := cliconfig.MergeConfig(*o.StartingKubeConfig, *newConfig)
 	if err != nil {
 		return false, err
 	}

@@ -12,7 +12,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/resource"
 
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 var (
@@ -102,7 +102,7 @@ func validate(cmd *cobra.Command, f *clientcmd.Factory, args []string) error {
 		Do()
 	infos, err := r.Infos()
 	if err != nil {
-		return kcmdutil.UsageError(cmd, err.Error())
+		return kcmdutil.UsageErrorf(cmd, err.Error())
 	}
 
 	wildcardpolicy := kcmdutil.GetFlagString(cmd, "wildcard-policy")

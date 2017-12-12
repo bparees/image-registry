@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"regexp"
 
-	unversionedvalidation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	kapi "k8s.io/kubernetes/pkg/api"
 	kapihelper "k8s.io/kubernetes/pkg/api/helper"
 	"k8s.io/kubernetes/pkg/api/validation"
 
-	"github.com/golang/glog"
 	templateapi "github.com/openshift/origin/pkg/template/apis/template"
 )
 
@@ -52,7 +50,6 @@ func validateTemplateBody(template *templateapi.Template) (allErrs field.ErrorLi
 	for i := range template.Parameters {
 		allErrs = append(allErrs, ValidateParameter(&template.Parameters[i], field.NewPath("parameters").Index(i))...)
 	}
-	allErrs = append(allErrs, unversionedvalidation.ValidateLabels(template.ObjectLabels, field.NewPath("labels"))...)
 	return
 }
 
@@ -64,22 +61,16 @@ func ValidateTemplateInstance(templateInstance *templateapi.TemplateInstance) (a
 
 	// Allow the nested template name and namespace to be empty.  If not empty,
 	// the fields should pass validation.
-	templateCopy, err := kapi.Scheme.DeepCopy(&templateInstance.Spec.Template)
-	if err != nil {
-		glog.V(2).Infof("Error copying template for validation: %v", err)
-		allErrs = append(allErrs, field.InternalError(field.NewPath(""), fmt.Errorf("Unable to copy template validation: %v", err)))
-	} else {
-		templateCopy := templateCopy.(*templateapi.Template)
-		if templateCopy.Name == "" {
-			templateCopy.Name = "dummy"
-		}
-		if templateCopy.Namespace == "" {
-			templateCopy.Namespace = "dummy"
-		}
-		for _, err := range ValidateTemplate(templateCopy) {
-			err.Field = "spec.template." + err.Field
-			allErrs = append(allErrs, err)
-		}
+	templateCopy := templateInstance.Spec.Template.DeepCopy()
+	if templateCopy.Name == "" {
+		templateCopy.Name = "dummy"
+	}
+	if templateCopy.Namespace == "" {
+		templateCopy.Namespace = "dummy"
+	}
+	for _, err := range ValidateTemplate(templateCopy) {
+		err.Field = "spec.template." + err.Field
+		allErrs = append(allErrs, err)
 	}
 	if templateInstance.Spec.Secret != nil {
 		if templateInstance.Spec.Secret.Name != "" {

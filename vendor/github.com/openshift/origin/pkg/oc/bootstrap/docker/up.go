@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
-	"github.com/docker/docker/cliconfig"
+	cliconfig "github.com/docker/docker/cli/config"
 	dockerclient "github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types/versions"
 	"github.com/golang/glog"
@@ -28,14 +28,14 @@ import (
 
 	configapi "github.com/openshift/origin/pkg/cmd/server/api"
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
-	osclientcmd "github.com/openshift/origin/pkg/cmd/util/clientcmd"
 	"github.com/openshift/origin/pkg/cmd/util/variable"
 	"github.com/openshift/origin/pkg/oc/bootstrap/docker/dockerhelper"
 	"github.com/openshift/origin/pkg/oc/bootstrap/docker/dockermachine"
 	"github.com/openshift/origin/pkg/oc/bootstrap/docker/errors"
 	"github.com/openshift/origin/pkg/oc/bootstrap/docker/host"
 	"github.com/openshift/origin/pkg/oc/bootstrap/docker/openshift"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
+	osclientcmd "github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 const (
@@ -222,6 +222,7 @@ type CommonStartConfig struct {
 	HTTPSProxy               string
 	NoProxy                  []string
 	CACert                   string
+	PVCount                  int
 
 	dockerClient    dockerhelper.Interface
 	dockerHelper    *dockerhelper.Helper
@@ -601,7 +602,7 @@ func getDockerClient(out io.Writer, dockerMachine string, canStartDockerMachine 
 	dockerTLSVerify := os.Getenv("DOCKER_TLS_VERIFY")
 	dockerCertPath := os.Getenv("DOCKER_CERT_PATH")
 	if len(dockerTLSVerify) > 0 && len(dockerCertPath) == 0 {
-		dockerCertPath = cliconfig.ConfigDir()
+		dockerCertPath = cliconfig.Dir()
 		os.Setenv("DOCKER_CERT_PATH", dockerCertPath)
 	}
 
@@ -910,7 +911,7 @@ func (c *ClientStartConfig) StartOpenShift(out io.Writer) error {
 		return err
 	}
 
-	err = c.OpenShiftHelper().SetupPersistentStorage(authorizationClient.Authorization(), kClient, securityClient, c.HostPersistentVolumesDir)
+	err = c.OpenShiftHelper().SetupPersistentStorage(authorizationClient.Authorization(), kClient, securityClient, c.HostPersistentVolumesDir, c.HostPersistentVolumesDir)
 	if err != nil {
 		return err
 	}
@@ -1112,7 +1113,7 @@ func (c *ClientStartConfig) RegisterTemplateServiceBroker(out io.Writer) error {
 // Login logs into the new server and sets up a default user and project
 func (c *ClientStartConfig) Login(out io.Writer) error {
 	server := c.OpenShiftHelper().Master(c.ServerIP)
-	return openshift.Login(initialUser, initialPassword, server, c.LocalConfigDir, c.originalFactory, c.command, out)
+	return openshift.Login(initialUser, initialPassword, server, c.LocalConfigDir, c.originalFactory, c.command, out, out)
 }
 
 // CreateProject creates a new project for the current user

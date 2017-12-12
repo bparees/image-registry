@@ -40,6 +40,11 @@ os::cmd::expect_success "oc login -u system:admin -n '${project}'"
 os::cmd::expect_success 'oc delete project policy-login'
 os::cmd::expect_failure_and_text 'oc create policybinding default -n myproject' 'error: the server does not support legacy policy resources'
 
+# validate --serviceaccount values
+os::cmd::expect_success_and_text 'oc policy add-role-to-user admin -z default' 'role "admin" added\: "default"'
+os::cmd::expect_failure_and_text 'oc policy add-role-to-user admin -z system:serviceaccount:test:default' 'should only be used with short\-form serviceaccount names'
+os::cmd::expect_failure_and_text 'oc policy add-role-to-user admin -z :invalid' '"\:invalid" is not a valid serviceaccount name'
+
 # This test validates user level policy
 os::cmd::expect_failure_and_text 'oc policy add-role-to-user' 'you must specify a role'
 os::cmd::expect_failure_and_text 'oc policy add-role-to-user -z NamespaceWithoutRole' 'you must specify a role'
@@ -110,7 +115,7 @@ __EOF__' 'Pod/testpod'
 
 os::cmd::expect_success_and_text 'oc adm policy scc-review --output yaml -f - << __EOF__
 $testpod
-__EOF__' 'allowedServiceAccounts: \[\]'
+__EOF__' 'allowedServiceAccounts: null'
 
 os::cmd::expect_success_and_text 'oc adm policy add-role-to-group view testgroup -o yaml' 'name: view'
 os::cmd::expect_success_and_text 'oc adm policy add-cluster-role-to-group cluster-reader testgroup -o yaml' '\- testgroup'
@@ -206,7 +211,7 @@ os::cmd::expect_success_and_text 'oc policy scc-review -z default  -f ${OS_ROOT}
 os::cmd::expect_success_and_text 'oc policy scc-review -z system:serviceaccount:policy-second:default  -f ${OS_ROOT}/test/testdata/job.yaml --no-headers=true' 'Job/hello   default   lax'
 os::cmd::expect_success_and_text 'oc policy scc-review -f ${OS_ROOT}/test/extended/testdata/deployments/deployment-simple.yaml --no-headers=true' 'DeploymentConfig/deployment-simple   default   lax'
 os::cmd::expect_success_and_text 'oc policy scc-review -f ${OS_ROOT}/test/testdata/nginx_pod.yaml --no-headers=true' ''
-os::cmd::expect_failure_and_text 'oc policy scc-review -z default -f ${OS_ROOT}/test/testdata/job.yaml --namespace=no-exist' 'error: unable to compute Pod Security Policy Review for "hello": User "bob" cannot create podsecuritypolicyreviews.security.openshift.io in the namespace "no-exist": User "bob" cannot create podsecuritypolicyreviews.security.openshift.io in project "no-exist"'
+os::cmd::expect_failure_and_text 'oc policy scc-review -z default -f ${OS_ROOT}/test/testdata/job.yaml --namespace=no-exist' 'error: unable to compute Pod Security Policy Review for "hello": podsecuritypolicyreviews.security.openshift.io is forbidden: User "bob" cannot create podsecuritypolicyreviews.security.openshift.io in the namespace "no-exist": User "bob" cannot create podsecuritypolicyreviews.security.openshift.io in project "no-exist"'
 os::cmd::expect_failure_and_text 'oc policy scc-review -z default -f ${OS_ROOT}/test/testdata/pspreview_unsupported_statefulset.yaml' 'error: StatefulSet "rd" with spec.volumeClaimTemplates currently not supported.'
 os::cmd::expect_failure_and_text 'oc policy scc-review -z no-exist -f ${OS_ROOT}/test/testdata/job.yaml' 'error: unable to compute Pod Security Policy Review for "hello": unable to retrieve ServiceAccount no-exist: serviceaccount "no-exist" not found'
 os::cmd::expect_success "oc login -u system:admin -n '${project}'"

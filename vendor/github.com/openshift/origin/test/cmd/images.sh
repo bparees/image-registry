@@ -9,7 +9,7 @@ trap os::test::junit::reconcile_output EXIT
   os::cmd::expect_success 'oc login -u system:admin'
   cluster_admin_context="$( oc config current-context )"
   os::cmd::expect_success "oc config use-context '${original_context}'"
-  oc delete project test-cmd-images-2 --context=${cluster_admin_context}
+  oc delete project test-cmd-images-2 merge-tags --context=${cluster_admin_context}
   oc delete all,templates --all --context=${cluster_admin_context}
 
   exit 0
@@ -143,12 +143,12 @@ os::cmd::expect_success_and_text "oc describe ${imagename}" 'Image Created:'
 os::cmd::expect_success_and_text "oc describe ${imagename}" 'Image Name:'
 
 # test prefer-os and prefer-arch annotations
-os::cmd::expect_success 'oc create -f test/testdata/test-nginx-multiarch-stream.yaml'
-os::cmd::try_until_success 'oc get istag test-nginx-multiarch-stream:linux-amd64'
-os::cmd::try_until_success 'oc get istag test-nginx-multiarch-stream:linux-ppc64le'
-os::cmd::expect_success_and_text 'oc get istag test-nginx-multiarch-stream:linux-amd64 --template={{.image.dockerImageMetadata.Architecture}}' 'amd64'
-os::cmd::expect_success_and_text 'oc get istag test-nginx-multiarch-stream:linux-ppc64le --template={{.image.dockerImageMetadata.Architecture}}' 'ppc64le'
-os::cmd::expect_success 'oc delete is test-nginx-multiarch-stream'
+os::cmd::expect_success 'oc create -f test/testdata/test-multiarch-stream.yaml'
+os::cmd::try_until_success 'oc get istag test-multiarch-stream:linux-amd64'
+os::cmd::try_until_success 'oc get istag test-multiarch-stream:linux-s390x'
+os::cmd::expect_success_and_text 'oc get istag test-multiarch-stream:linux-amd64 --template={{.image.dockerImageMetadata.Architecture}}' 'amd64'
+os::cmd::expect_success_and_text 'oc get istag test-multiarch-stream:linux-s390x --template={{.image.dockerImageMetadata.Architecture}}' 's390x'
+os::cmd::expect_success 'oc delete is test-multiarch-stream'
 echo "imageStreams: ok"
 os::test::junit::declare_suite_end
 
@@ -283,13 +283,25 @@ os::test::junit::declare_suite_end
 os::test::junit::declare_suite_start "cmd/images${IMAGES_TESTS_POSTFIX:-}/delete-istag"
 # test deleting a tag using oc delete
 os::cmd::expect_success_and_text "oc get is perl --template '{{(index .spec.tags 0).name}}'" '5.16'
-os::cmd::expect_success_and_text "oc get is perl --template '{{(index .status.tags 0).tag}}'" 'latest'
+os::cmd::expect_success_and_text "oc get is perl --template '{{(index .status.tags 0).tag}}'" '5.16'
+os::cmd::expect_success_and_text "oc describe is perl | sed -n -e '0,/^Tags:/d' -e '/^\s\+/d' -e '/./p' | head -n 1" 'latest'
 os::cmd::expect_success "oc delete istag/perl:5.16 --context='${cluster_admin_context}'"
 os::cmd::expect_success_and_not_text 'oc get is/perl --template={{.spec.tags}}' 'version:5.16'
 os::cmd::expect_success_and_not_text 'oc get is/perl --template={{.status.tags}}' 'version:5.16'
 os::cmd::expect_success 'oc delete all --all'
 
 echo "delete istag: ok"
+os::test::junit::declare_suite_end
+
+os::test::junit::declare_suite_start "cmd/images${IMAGES_TESTS_POSTFIX:-}/merge-tags-on-apply"
+os::cmd::expect_success 'oc new-project merge-tags'
+os::cmd::expect_success 'oc create -f examples/image-streams/image-streams-centos7.json'
+os::cmd::expect_success_and_text 'oc get is ruby -o jsonpath={.spec.tags[*].name}' '2.0 2.2 2.3 2.4 latest'
+os::cmd::expect_success 'oc apply -f test/testdata/images/modified-ruby-imagestream.json'
+os::cmd::expect_success_and_text 'oc get is ruby -o jsonpath={.spec.tags[*].name}' '2.0 2.2 2.3 2.4 latest newtag'
+os::cmd::expect_success_and_text 'oc get is ruby -o jsonpath={.spec.tags[3].annotations.version}' '2.4 patched'
+os::cmd::expect_success 'oc delete project merge-tags'
+echo "apply new imagestream tags: ok"
 os::test::junit::declare_suite_end
 
 os::test::junit::declare_suite_end

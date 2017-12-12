@@ -19,7 +19,7 @@ import (
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
 
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 var (
@@ -170,7 +170,7 @@ func (o *ProbeOptions) Complete(f *clientcmd.Factory, cmd *cobra.Command, args [
 		o.Command = args[i:]
 	}
 	if len(o.Filenames) == 0 && len(args) < 1 {
-		return kcmdutil.UsageError(cmd, "one or more resources must be specified as <resource> <name> or <resource>/<name>")
+		return kcmdutil.UsageErrorf(cmd, "one or more resources must be specified as <resource> <name> or <resource>/<name>")
 	}
 
 	cmdNamespace, explicit, err := f.DefaultNamespace()
@@ -336,12 +336,12 @@ func (o *ProbeOptions) Run() error {
 
 		obj, err := resource.NewHelper(info.Client, info.Mapping).Patch(info.Namespace, info.Name, types.StrategicMergePatchType, patch.Patch)
 		if err != nil {
-			handlePodUpdateError(o.Err, err, "probes")
-
 			// if no port was specified, inform that one must be provided
 			if len(o.HTTPGet) > 0 && len(o.HTTPGetAction.Port.String()) == 0 {
-				fmt.Fprintf(o.Err, "\nA port must be specified as part of a url (http://127.0.0.1:3306).\nSee 'oc set probe -h' for help and examples.\n")
+				fmt.Fprintf(o.Err, "A port must be specified as part of a url (http://127.0.0.1:3306).\n\nSee 'oc set probe -h' for help and examples.\n")
 			}
+			handlePodUpdateError(o.Err, err, "probes")
+
 			failed = true
 			continue
 		}

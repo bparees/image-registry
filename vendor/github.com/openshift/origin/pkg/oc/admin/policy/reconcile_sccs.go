@@ -20,7 +20,7 @@ import (
 
 	"github.com/openshift/origin/pkg/cmd/server/bootstrappolicy"
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	securityapi "github.com/openshift/origin/pkg/security/apis/security"
 	securitytypedclient "github.com/openshift/origin/pkg/security/generated/internalclientset/typed/security/internalversion"
 )
@@ -94,7 +94,7 @@ func NewCmdReconcileSCC(name, fullName string, f *clientcmd.Factory, out io.Writ
 				kcmdutil.CheckErr(err)
 			}
 			if err := o.Validate(); err != nil {
-				kcmdutil.CheckErr(kcmdutil.UsageError(cmd, err.Error()))
+				kcmdutil.CheckErr(kcmdutil.UsageErrorf(cmd, err.Error()))
 			}
 			if err := o.RunReconcileSCCs(cmd, f); err != nil {
 				kcmdutil.CheckErr(err)
@@ -113,7 +113,7 @@ func NewCmdReconcileSCC(name, fullName string, f *clientcmd.Factory, out io.Writ
 
 func (o *ReconcileSCCOptions) Complete(cmd *cobra.Command, f *clientcmd.Factory, args []string) error {
 	if len(args) != 0 {
-		return kcmdutil.UsageError(cmd, "no arguments are allowed")
+		return kcmdutil.UsageErrorf(cmd, "no arguments are allowed")
 	}
 
 	kClient, err := f.ClientSet()

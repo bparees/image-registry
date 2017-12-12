@@ -17,7 +17,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/resource"
 	kprinters "k8s.io/kubernetes/pkg/printers"
 
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	templateapi "github.com/openshift/origin/pkg/template/apis/template"
 )
 
@@ -86,7 +86,7 @@ func RunExport(f *clientcmd.Factory, exporter Exporter, in io.Reader, out io.Wri
 	asTemplate := kcmdutil.GetFlagString(cmd, "as-template")
 	raw := kcmdutil.GetFlagBool(cmd, "raw")
 	if exact && raw {
-		return kcmdutil.UsageError(cmd, "--exact and --raw may not both be specified")
+		return kcmdutil.UsageErrorf(cmd, "--exact and --raw may not both be specified")
 	}
 
 	clientConfig, err := f.ClientConfig()

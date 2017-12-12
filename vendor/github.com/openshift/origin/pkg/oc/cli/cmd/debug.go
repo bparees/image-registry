@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	kapierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -22,16 +23,16 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/cmd/templates"
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
+	"k8s.io/kubernetes/pkg/kubectl/util/term"
 	"k8s.io/kubernetes/pkg/util/interrupt"
-	"k8s.io/kubernetes/pkg/util/term"
 
 	deployapi "github.com/openshift/origin/pkg/apps/apis/apps"
 	appsclient "github.com/openshift/origin/pkg/apps/generated/internalclientset/typed/apps/internalversion"
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
 	generateapp "github.com/openshift/origin/pkg/generate/app"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
 	imageclient "github.com/openshift/origin/pkg/image/generated/internalclientset/typed/image/internalversion"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 type DebugOptions struct {
@@ -179,14 +180,14 @@ func (o *DebugOptions) Complete(cmd *cobra.Command, f *clientcmd.Factory, args [
 	}
 	resources, envArgs, ok := cmdutil.SplitEnvironmentFromResources(args)
 	if !ok {
-		return kcmdutil.UsageError(cmd, "all resources must be specified before environment changes: %s", strings.Join(args, " "))
+		return kcmdutil.UsageErrorf(cmd, "all resources must be specified before environment changes: %s", strings.Join(args, " "))
 	}
 
 	switch {
 	case o.ForceTTY && o.NoStdin:
-		return kcmdutil.UsageError(cmd, "you may not specify -I and -t together")
+		return kcmdutil.UsageErrorf(cmd, "you may not specify -I and -t together")
 	case o.ForceTTY && o.DisableTTY:
-		return kcmdutil.UsageError(cmd, "you may not specify -t and -T together")
+		return kcmdutil.UsageErrorf(cmd, "you may not specify -t and -T together")
 	case o.ForceTTY:
 		o.Attach.TTY = true
 	// since ForceTTY is defaulted to false, check if user specifically passed in "=false" flag
@@ -600,6 +601,9 @@ func (o *DebugOptions) transformPodForDebug(annotations map[string]string) (*kap
 	pod.UID = ""
 	pod.CreationTimestamp = metav1.Time{}
 	pod.SelfLink = ""
+
+	// clear pod ownerRefs
+	pod.ObjectMeta.OwnerReferences = []v1.OwnerReference{}
 
 	return pod, originalCommand
 }

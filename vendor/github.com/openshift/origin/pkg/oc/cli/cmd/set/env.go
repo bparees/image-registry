@@ -21,7 +21,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/resource"
 
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	envresolve "github.com/openshift/origin/pkg/pod/envresolve"
 )
 
@@ -169,10 +169,10 @@ func keyToEnvName(key string) string {
 func (o *EnvOptions) Complete(f *clientcmd.Factory, cmd *cobra.Command, args []string) error {
 	resources, envArgs, ok := cmdutil.SplitEnvironmentFromResources(args)
 	if !ok {
-		return kcmdutil.UsageError(o.Cmd, "all resources must be specified before environment changes: %s", strings.Join(args, " "))
+		return kcmdutil.UsageErrorf(o.Cmd, "all resources must be specified before environment changes: %s", strings.Join(args, " "))
 	}
 	if len(o.Filenames) == 0 && len(resources) < 1 {
-		return kcmdutil.UsageError(cmd, "one or more resources must be specified as <resource> <name> or <resource>/<name>")
+		return kcmdutil.UsageErrorf(cmd, "one or more resources must be specified as <resource> <name> or <resource>/<name>")
 	}
 
 	o.ContainerSelector = kcmdutil.GetFlagString(cmd, "containers")
@@ -193,7 +193,7 @@ func (o *EnvOptions) Complete(f *clientcmd.Factory, cmd *cobra.Command, args []s
 	o.ShortOutput = kcmdutil.GetFlagString(cmd, "output") == "name"
 
 	if o.List && len(o.Output) > 0 {
-		return kcmdutil.UsageError(o.Cmd, "--list and --output may not be specified together")
+		return kcmdutil.UsageErrorf(o.Cmd, "--list and --output may not be specified together")
 	}
 
 	return nil
@@ -307,7 +307,7 @@ func (o *EnvOptions) RunEnv(f *clientcmd.Factory) error {
 
 	// only apply resource version locking on a single resource
 	if !one && len(o.ResourceVersion) > 0 {
-		return kcmdutil.UsageError(o.Cmd, "--resource-version may only be used with a single resource")
+		return kcmdutil.UsageErrorf(o.Cmd, "--resource-version may only be used with a single resource")
 	}
 	// Keep a copy of the original objects prior to updating their environment.
 	// Used in constructing the patch(es) that will be applied in the server.
@@ -478,7 +478,7 @@ updates:
 
 		// make sure arguments to set or replace environment variables are set
 		// before returning a successful message
-		if len(env) == 0 && len(o.EnvArgs) == 0 {
+		if len(env) == 0 && len(o.EnvArgs) == 0 && len(remove) == 0 {
 			return fmt.Errorf("at least one environment variable must be provided")
 		}
 

@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/docker/distribution/digest"
+	godigest "github.com/opencontainers/go-digest"
+
+	"k8s.io/client-go/rest"
 
 	"github.com/openshift/origin/pkg/image/importer"
 )
@@ -18,7 +20,12 @@ func getImageManifestByIDFromRegistry(registry *url.URL, repositoryName, imageID
 	credentials := importer.NewBasicCredentials()
 	credentials.Add(registry, username, password)
 
-	repo, err := importer.NewContext(http.DefaultTransport, http.DefaultTransport).
+	insecureRT, err := rest.TransportFor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}})
+	if err != nil {
+		return nil, err
+	}
+
+	repo, err := importer.NewContext(http.DefaultTransport, insecureRT).
 		WithCredentials(credentials).
 		Repository(ctx, registry, repositoryName, insecure)
 	if err != nil {
@@ -30,7 +37,7 @@ func getImageManifestByIDFromRegistry(registry *url.URL, repositoryName, imageID
 		return nil, err
 	}
 
-	manifest, err := manifests.Get(ctx, digest.Digest(imageID))
+	manifest, err := manifests.Get(ctx, godigest.Digest(imageID))
 	if err != nil {
 		return nil, err
 	}

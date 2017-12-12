@@ -19,10 +19,10 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/resource"
 	kprinters "k8s.io/kubernetes/pkg/printers"
 
+	securityapiv1 "github.com/openshift/api/security/v1"
 	ometa "github.com/openshift/origin/pkg/api/meta"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 	securityapi "github.com/openshift/origin/pkg/security/apis/security"
-	securityapiv1 "github.com/openshift/origin/pkg/security/apis/security/v1"
 	securitytypedclient "github.com/openshift/origin/pkg/security/generated/internalclientset/typed/security/internalversion"
 )
 
@@ -84,7 +84,7 @@ func NewCmdSccReview(name, fullName string, f *clientcmd.Factory, out io.Writer)
 
 func (o *sccReviewOptions) Complete(f *clientcmd.Factory, args []string, cmd *cobra.Command, out io.Writer) error {
 	if len(args) == 0 && len(o.FilenameOptions.Filenames) == 0 {
-		return kcmdutil.UsageError(cmd, cmd.Use)
+		return kcmdutil.UsageErrorf(cmd, cmd.Use)
 	}
 	for _, sa := range o.serviceAccountNames {
 		if strings.HasPrefix(sa, serviceaccount.ServiceAccountUsernamePrefix) {

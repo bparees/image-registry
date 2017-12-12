@@ -18,6 +18,7 @@ import (
 
 	"github.com/golang/glog"
 
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	kapi "k8s.io/kubernetes/pkg/api"
@@ -27,6 +28,9 @@ import (
 	knetwork "k8s.io/kubernetes/pkg/kubelet/network"
 	kubehostport "k8s.io/kubernetes/pkg/kubelet/network/hostport"
 	kbandwidth "k8s.io/kubernetes/pkg/util/bandwidth"
+	utildbus "k8s.io/kubernetes/pkg/util/dbus"
+	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
+	utilexec "k8s.io/utils/exec"
 
 	"github.com/containernetworking/cni/pkg/invoke"
 	"github.com/containernetworking/cni/pkg/ip"
@@ -165,7 +169,8 @@ func getIPAMConfig(clusterNetworks []common.ClusterNetwork, localSubnet string) 
 // Start the CNI server and start processing requests from it
 func (m *podManager) Start(socketPath string, localSubnetCIDR string, clusterNetworks []common.ClusterNetwork) error {
 	if m.enableHostports {
-		m.hostportSyncer = kubehostport.NewHostportSyncer()
+		iptInterface := utiliptables.New(utilexec.New(), utildbus.New(), utiliptables.ProtocolIpv4)
+		m.hostportSyncer = kubehostport.NewHostportSyncer(iptInterface)
 	}
 
 	var err error
@@ -377,8 +382,8 @@ func getVethInfo(netns, containerIfname string) (string, string, string, error) 
 
 // Adds a macvlan interface to a container, if requested, for use with the egress router feature
 func maybeAddMacvlan(pod *kapi.Pod, netns string) error {
-	val, ok := pod.Annotations[networkapi.AssignMacvlanAnnotation]
-	if !ok || val != "true" {
+	annotation, ok := pod.Annotations[networkapi.AssignMacvlanAnnotation]
+	if !ok || annotation == "false" {
 		return nil
 	}
 
@@ -393,23 +398,31 @@ func maybeAddMacvlan(pod *kapi.Pod, netns string) error {
 		return fmt.Errorf("pod has %q annotation but is not privileged", networkapi.AssignMacvlanAnnotation)
 	}
 
-	// Find interface with the default route
-	var defIface netlink.Link
-	routes, err := netlink.RouteList(nil, netlink.FAMILY_V4)
-	if err != nil {
-		return fmt.Errorf("failed to read routes: %v", err)
-	}
+	var iface netlink.Link
+	var err error
+	if annotation == "true" {
+		// Find interface with the default route
+		routes, err := netlink.RouteList(nil, netlink.FAMILY_V4)
+		if err != nil {
+			return fmt.Errorf("failed to read routes: %v", err)
+		}
 
-	for _, r := range routes {
-		if r.Dst == nil {
-			defIface, err = netlink.LinkByIndex(r.LinkIndex)
-			if err != nil {
-				return fmt.Errorf("failed to get default route interface: %v", err)
+		for _, r := range routes {
+			if r.Dst == nil {
+				iface, err = netlink.LinkByIndex(r.LinkIndex)
+				if err != nil {
+					return fmt.Errorf("failed to get default route interface: %v", err)
+				}
 			}
 		}
-	}
-	if defIface == nil {
-		return fmt.Errorf("failed to find default route interface")
+		if iface == nil {
+			return fmt.Errorf("failed to find default route interface")
+		}
+	} else {
+		iface, err = netlink.LinkByName(annotation)
+		if err != nil {
+			return fmt.Errorf("pod annotation %q is neither 'true' nor the name of a local network interface", networkapi.AssignMacvlanAnnotation)
+		}
 	}
 
 	podNs, err := ns.GetNS(netns)
@@ -420,9 +433,9 @@ func maybeAddMacvlan(pod *kapi.Pod, netns string) error {
 
 	err = netlink.LinkAdd(&netlink.Macvlan{
 		LinkAttrs: netlink.LinkAttrs{
-			MTU:         defIface.Attrs().MTU,
+			MTU:         iface.Attrs().MTU,
 			Name:        "macvlan0",
-			ParentIndex: defIface.Attrs().Index,
+			ParentIndex: iface.Attrs().Index,
 			Namespace:   netlink.NsFd(podNs.Fd()),
 		},
 		Mode: netlink.MACVLAN_MODE_PRIVATE,
@@ -556,7 +569,7 @@ func (m *podManager) setup(req *cniserver.PodRequest) (cnitypes.Result, *running
 	}()
 
 	// Open any hostports the pod wants
-	var v1Pod kapiv1.Pod
+	var v1Pod v1.Pod
 	if err := kapiv1.Convert_api_Pod_To_v1_Pod(pod, &v1Pod, nil); err != nil {
 		return nil, nil, err
 	}

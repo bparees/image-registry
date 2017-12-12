@@ -9,7 +9,10 @@ import (
 	"time"
 
 	"github.com/google/gofuzz"
+
 	apitesting "k8s.io/apimachinery/pkg/api/testing"
+	"k8s.io/apimachinery/pkg/api/testing/fuzzer"
+	"k8s.io/apimachinery/pkg/api/testing/roundtrip"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -23,10 +26,10 @@ import (
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	extensionsv1beta1 "k8s.io/kubernetes/pkg/apis/extensions/v1beta1"
 
+	buildv1 "github.com/openshift/api/build/v1"
 	deploy "github.com/openshift/origin/pkg/apps/apis/apps"
 	authorizationapi "github.com/openshift/origin/pkg/authorization/apis/authorization"
 	build "github.com/openshift/origin/pkg/build/apis/build"
-	buildv1 "github.com/openshift/origin/pkg/build/apis/build/v1"
 	image "github.com/openshift/origin/pkg/image/apis/image"
 	oauthapi "github.com/openshift/origin/pkg/oauth/apis/oauth"
 	route "github.com/openshift/origin/pkg/route/apis/route"
@@ -42,8 +45,7 @@ import (
 )
 
 func originFuzzer(t *testing.T, seed int64) *fuzz.Fuzzer {
-	f := apitesting.FuzzerFor(apitesting.GenericFuzzerFuncs(t, kapi.Codecs), rand.NewSource(seed))
-	f.Funcs(kapitesting.FuzzerFuncs(t, kapi.Codecs)...)
+	f := fuzzer.FuzzerFor(kapitesting.FuzzerFuncs, rand.NewSource(seed), kapi.Codecs)
 	f.Funcs(
 		// Roles and RoleBindings maps are never nil
 		func(j *authorizationapi.Policy, c fuzz.Continue) {
@@ -564,7 +566,7 @@ func TestSpecificKind(t *testing.T) {
 	// TODO: make upstream CodecFactory customizable
 	codecs := serializer.NewCodecFactory(kapi.Scheme)
 	for i := 0; i < fuzzIters; i++ {
-		apitesting.RoundTripSpecificKindWithoutProtobuf(t, gvk, kapi.Scheme, codecs, fuzzer, nil)
+		roundtrip.RoundTripSpecificKindWithoutProtobuf(t, gvk, kapi.Scheme, codecs, fuzzer, nil)
 	}
 }
 
@@ -585,7 +587,7 @@ func TestRoundTripTypes(t *testing.T) {
 		componentconfig.SchemeGroupVersion.WithKind("KubeSchedulerConfiguration"): true,
 	}
 
-	apitesting.RoundTripTypes(t, kapi.Scheme, kapi.Codecs, fuzzer, mergeGvks(kubeExceptions, dockerImageTypes))
+	roundtrip.RoundTripTypes(t, kapi.Scheme, kapi.Codecs, fuzzer, mergeGvks(kubeExceptions, dockerImageTypes))
 }
 
 // TestRoundTripDockerImage tests DockerImage whether it serializes from/into docker's registry API.
@@ -594,8 +596,8 @@ func TestRoundTripDockerImage(t *testing.T) {
 	fuzzer := originFuzzer(t, seed)
 
 	for gvk := range dockerImageTypes {
-		apitesting.RoundTripSpecificKindWithoutProtobuf(t, gvk, kapi.Scheme, kapi.Codecs, fuzzer, nil)
-		apitesting.RoundTripSpecificKindWithoutProtobuf(t, gvk, kapi.Scheme, kapi.Codecs, fuzzer, nil)
+		roundtrip.RoundTripSpecificKindWithoutProtobuf(t, gvk, kapi.Scheme, kapi.Codecs, fuzzer, nil)
+		roundtrip.RoundTripSpecificKindWithoutProtobuf(t, gvk, kapi.Scheme, kapi.Codecs, fuzzer, nil)
 	}
 }
 

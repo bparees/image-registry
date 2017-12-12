@@ -7,19 +7,19 @@ import (
 
 	"github.com/golang/glog"
 
+	"k8s.io/api/core/v1"
 	kapierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	kutilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	kcoreclient "k8s.io/client-go/kubernetes/typed/core/v1"
+	kcorelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 	kapi "k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/v1"
-	kcoreclient "k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/core/v1"
-	kcorelisters "k8s.io/kubernetes/pkg/client/listers/core/v1"
-	"k8s.io/kubernetes/pkg/client/retry"
 	kcontroller "k8s.io/kubernetes/pkg/controller"
 
 	deployapi "github.com/openshift/origin/pkg/apps/apis/apps"
@@ -121,20 +121,16 @@ func (c *DeploymentConfigController) Handle(config *deployapi.DeploymentConfig) 
 		return c.updateStatus(config, existingDeployments)
 	}
 
-	latestIsDeployed, latestDeployment := deployutil.LatestDeploymentInfo(config, existingDeployments)
+	latestExists, latestDeployment := deployutil.LatestDeploymentInfo(config, existingDeployments)
 
-	if !latestIsDeployed {
+	if !latestExists {
 		if err := c.cancelRunningRollouts(config, existingDeployments, cm); err != nil {
 			return err
 		}
 	}
+	configCopy := config.DeepCopy()
 	// Process triggers and start an initial rollouts
-	configCopy, err := deployutil.DeploymentConfigDeepCopy(config)
-	if err != nil {
-		glog.Errorf("Unable to copy deployment config: %v", err)
-		return c.updateStatus(config, existingDeployments)
-	}
-	shouldTrigger, shouldSkip := triggerActivated(configCopy, latestIsDeployed, latestDeployment, c.codec)
+	shouldTrigger, shouldSkip := triggerActivated(configCopy, latestExists, latestDeployment, c.codec)
 	if !shouldSkip && shouldTrigger {
 		configCopy.Status.LatestVersion++
 		return c.updateStatus(configCopy, existingDeployments)
@@ -145,18 +141,7 @@ func (c *DeploymentConfigController) Handle(config *deployapi.DeploymentConfig) 
 	}
 	// If the latest deployment already exists, reconcile existing deployments
 	// and return early.
-	if latestIsDeployed {
-		// If the latest deployment is still running, try again later. We don't
-		// want to compete with the deployer.
-		if !deployutil.IsTerminatedDeployment(latestDeployment) {
-			return c.updateStatus(config, existingDeployments)
-		}
-
-		return c.reconcileDeployments(existingDeployments, config, cm)
-	}
-	// If the latest deployment already exists, reconcile existing deployments
-	// and return early.
-	if latestIsDeployed {
+	if latestExists {
 		// If the latest deployment is still running, try again later. We don't
 		// want to compete with the deployer.
 		if !deployutil.IsTerminatedDeployment(latestDeployment) {
@@ -277,10 +262,7 @@ func (c *DeploymentConfigController) reconcileDeployments(existingDeployments []
 					)
 				}
 
-				copied, err = deployutil.DeploymentDeepCopyV1(rc)
-				if err != nil {
-					return err
-				}
+				copied = rc.DeepCopy()
 				copied.Spec.Replicas = &newReplicaCount
 				copied, err = c.rn.ReplicationControllers(copied.Namespace).Update(copied)
 				return err
@@ -317,11 +299,7 @@ func (c *DeploymentConfigController) updateStatus(config *deployapi.DeploymentCo
 		return nil
 	}
 
-	copied, err := deployutil.DeploymentConfigDeepCopy(config)
-	if err != nil {
-		return err
-	}
-
+	copied := config.DeepCopy()
 	copied.Status = newStatus
 	// TODO: Retry update conficts
 	if _, err := c.dn.DeploymentConfigs(copied.Namespace).UpdateStatus(copied); err != nil {
@@ -371,10 +349,7 @@ func (c *DeploymentConfigController) cancelRunningRollouts(config *deployapi.Dep
 				return nil
 			}
 
-			copied, err := deployutil.DeploymentDeepCopyV1(rc)
-			if err != nil {
-				return err
-			}
+			copied := rc.DeepCopy()
 			copied.Annotations[deployapi.DeploymentCancelledAnnotation] = deployapi.DeploymentCancelledAnnotationValue
 			copied.Annotations[deployapi.DeploymentStatusReasonAnnotation] = deployapi.DeploymentCancelledNewerDeploymentExists
 			updatedDeployment, err = c.rn.ReplicationControllers(copied.Namespace).Update(copied)
@@ -544,7 +519,7 @@ func (c *DeploymentConfigController) cleanupOldDeployments(existingDeployments [
 // triggers were activated (config change or image change). The first bool indicates that
 // the triggers are active and second indicates if we should skip the rollout because we
 // are waiting for the trigger to complete update (waiting for image for example).
-func triggerActivated(config *deployapi.DeploymentConfig, latestIsDeployed bool, latestDeployment *v1.ReplicationController, codec runtime.Codec) (bool, bool) {
+func triggerActivated(config *deployapi.DeploymentConfig, latestExists bool, latestDeployment *v1.ReplicationController, codec runtime.Codec) (bool, bool) {
 	if config.Spec.Paused {
 		return false, false
 	}
@@ -583,7 +558,7 @@ func triggerActivated(config *deployapi.DeploymentConfig, latestIsDeployed bool,
 	}
 
 	// Wait for the RC to be created
-	if !latestIsDeployed {
+	if !latestExists {
 		return false, true
 	}
 

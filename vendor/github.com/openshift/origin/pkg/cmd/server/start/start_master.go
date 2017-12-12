@@ -507,7 +507,7 @@ func (m *Master) Start() error {
 		}
 		// the API server runs a reverse index on users to groups which requires an index on the group informer
 		// this activates the lister/watcher, so we want to do it only in this path
-		err = informers.userInformers.User().InternalVersion().Groups().Informer().AddIndexers(cache.Indexers{
+		err = informers.userInformers.User().V1().Groups().Informer().AddIndexers(cache.Indexers{
 			usercache.ByUserIndexName: usercache.ByUserIndexKeys,
 		})
 		if err != nil {
@@ -564,7 +564,7 @@ func StartAPI(oc *origin.MasterConfig, controllerPlug plug.Plug) error {
 
 	// if the webconsole is configured to be standalone, go ahead and create and run it
 	if oc.WebConsoleEnabled() && oc.WebConsoleStandalone() {
-		config, err := origin.NewAssetServerConfigFromMasterConfig(oc.Options)
+		config, err := assetapiserver.NewAssetServerConfig(*oc.Options.AssetConfig)
 		if err != nil {
 			return err
 		}

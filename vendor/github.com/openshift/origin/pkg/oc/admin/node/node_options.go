@@ -15,18 +15,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/kubernetes"
 	kapi "k8s.io/kubernetes/pkg/api"
-	externalclientset "k8s.io/kubernetes/pkg/client/clientset_generated/clientset"
 	kclientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
 	kprinters "k8s.io/kubernetes/pkg/printers"
 
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 type NodeOptions struct {
 	DefaultNamespace   string
-	ExternalKubeClient externalclientset.Interface
+	ExternalKubeClient kubernetes.Interface
 	KubeClient         kclientset.Interface
 	Writer             io.Writer
 	ErrWriter          io.Writer
@@ -64,7 +64,7 @@ func (n *NodeOptions) Complete(f *clientcmd.Factory, c *cobra.Command, args []st
 	if err != nil {
 		return err
 	}
-	externalkc, err := externalclientset.NewForConfig(config)
+	externalkc, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return err
 	}
@@ -183,24 +183,24 @@ func (n *NodeOptions) GetPrintersByObject(obj runtime.Object) (kprinters.Resourc
 	if err != nil {
 		return nil, err
 	}
-	return n.GetPrinters(gvk[0])
+	return n.GetPrinters(gvk[0], kprinters.PrintOptions{})
 }
 
-func (n *NodeOptions) GetPrintersByResource(resource schema.GroupVersionResource) (kprinters.ResourcePrinter, error) {
+func (n *NodeOptions) GetPrintersByResource(resource schema.GroupVersionResource, options kprinters.PrintOptions) (kprinters.ResourcePrinter, error) {
 	gvks, err := n.Mapper.KindsFor(resource)
 	if err != nil {
 		return nil, err
 	}
-	return n.GetPrinters(gvks[0])
+	return n.GetPrinters(gvks[0], options)
 }
 
-func (n *NodeOptions) GetPrinters(gvk schema.GroupVersionKind) (kprinters.ResourcePrinter, error) {
+func (n *NodeOptions) GetPrinters(gvk schema.GroupVersionKind, options kprinters.PrintOptions) (kprinters.ResourcePrinter, error) {
 	mapping, err := n.Mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		return nil, err
 	}
 
-	return n.Printer(mapping, kprinters.PrintOptions{})
+	return n.Printer(mapping, options)
 }
 
 func GetPodHostFieldLabel(apiVersion string) string {

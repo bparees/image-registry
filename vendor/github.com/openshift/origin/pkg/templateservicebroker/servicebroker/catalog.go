@@ -9,6 +9,7 @@ import (
 	"github.com/golang/glog"
 	jsschema "github.com/lestrrat/go-jsschema"
 
+	templateapiv1 "github.com/openshift/api/template/v1"
 	oapi "github.com/openshift/origin/pkg/api"
 	templateapi "github.com/openshift/origin/pkg/template/apis/template"
 	"github.com/openshift/origin/pkg/templateservicebroker/openservicebroker/api"
@@ -31,7 +32,7 @@ var annotationMap = map[string]string{
 
 // serviceFromTemplate populates an open service broker service response from
 // an OpenShift template.
-func serviceFromTemplate(template *templateapi.Template) *api.Service {
+func serviceFromTemplate(template *templateapiv1.Template) *api.Service {
 	metadata := make(map[string]interface{})
 	for srcname, dstname := range annotationMap {
 		if value, ok := template.Annotations[srcname]; ok {
@@ -55,12 +56,14 @@ func serviceFromTemplate(template *templateapi.Template) *api.Service {
 		paramOrdering = append(paramOrdering, param.Name)
 	}
 
+	bindable := strings.ToLower(template.Annotations[templateapi.BindableAnnotation]) != "false"
+
 	plan := api.Plan{
 		ID:          string(template.UID), // TODO: this should be a unique value
 		Name:        "default",
 		Description: "Default plan",
 		Free:        true,
-		Bindable:    true,
+		Bindable:    bindable,
 		Schemas: api.Schema{
 			ServiceInstance: api.ServiceInstances{
 				Create: map[string]*jsschema.Schema{
@@ -106,7 +109,7 @@ func serviceFromTemplate(template *templateapi.Template) *api.Service {
 		ID:          string(template.UID),
 		Description: description,
 		Tags:        strings.Split(template.Annotations["tags"], ","),
-		Bindable:    true,
+		Bindable:    bindable,
 		Metadata:    metadata,
 		Plans:       []api.Plan{plan},
 	}

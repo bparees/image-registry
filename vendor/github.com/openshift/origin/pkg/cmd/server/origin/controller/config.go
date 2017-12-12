@@ -10,14 +10,31 @@ import (
 	"k8s.io/client-go/util/cert"
 	kapi "k8s.io/kubernetes/pkg/api"
 	kcontroller "k8s.io/kubernetes/pkg/controller"
-	"k8s.io/kubernetes/pkg/serviceaccount"
 	serviceaccountadmission "k8s.io/kubernetes/plugin/pkg/admission/serviceaccount"
 
 	configapi "github.com/openshift/origin/pkg/cmd/server/api"
 	"github.com/openshift/origin/pkg/cmd/server/crypto"
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
 	"github.com/openshift/origin/pkg/cmd/util/variable"
 )
+
+func envVars(host string, caData []byte, insecure bool, bearerTokenFile string) []kapi.EnvVar {
+	envvars := []kapi.EnvVar{
+		{Name: "KUBERNETES_MASTER", Value: host},
+		{Name: "OPENSHIFT_MASTER", Value: host},
+	}
+
+	if len(bearerTokenFile) > 0 {
+		envvars = append(envvars, kapi.EnvVar{Name: "BEARER_TOKEN_FILE", Value: bearerTokenFile})
+	}
+
+	if len(caData) > 0 {
+		envvars = append(envvars, kapi.EnvVar{Name: "OPENSHIFT_CA_DATA", Value: string(caData)})
+	} else if insecure {
+		envvars = append(envvars, kapi.EnvVar{Name: "OPENSHIFT_INSECURE", Value: "true"})
+	}
+
+	return envvars
+}
 
 func getOpenShiftClientEnvVars(options configapi.MasterConfig) ([]kapi.EnvVar, error) {
 	_, kclientConfig, err := configapi.GetInternalKubeClient(
@@ -27,7 +44,7 @@ func getOpenShiftClientEnvVars(options configapi.MasterConfig) ([]kapi.EnvVar, e
 	if err != nil {
 		return nil, err
 	}
-	return clientcmd.EnvVars(
+	return envVars(
 		kclientConfig.Host,
 		kclientConfig.CAData,
 		kclientConfig.Insecure,
@@ -120,7 +137,7 @@ func BuildOpenshiftControllerConfig(options configapi.MasterConfig) (*OpenshiftC
 		},
 	}
 	if len(options.ServiceAccountConfig.PrivateKeyFile) > 0 {
-		ret.ServiceAccountTokenControllerOptions.PrivateKey, err = serviceaccount.ReadPrivateKey(options.ServiceAccountConfig.PrivateKeyFile)
+		ret.ServiceAccountTokenControllerOptions.PrivateKey, err = cert.PrivateKeyFromFile(options.ServiceAccountConfig.PrivateKeyFile)
 		if err != nil {
 			return nil, fmt.Errorf("error reading signing key for Service Account Token Manager: %v", err)
 		}
@@ -201,7 +218,7 @@ func BuildOpenshiftControllerConfig(options configapi.MasterConfig) (*OpenshiftC
 		ScheduledImageImportMinimumIntervalSeconds: options.ImagePolicyConfig.ScheduledImageImportMinimumIntervalSeconds,
 	}
 	ret.ImageSignatureImportControllerConfig = ImageSignatureImportControllerConfig{
-		ResyncPeriod:          10 * time.Minute,
+		ResyncPeriod:          1 * time.Hour,
 		SignatureFetchTimeout: 1 * time.Minute,
 		SignatureImportLimit:  3,
 	}

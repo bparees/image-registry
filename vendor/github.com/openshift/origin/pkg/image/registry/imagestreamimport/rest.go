@@ -8,6 +8,7 @@ import (
 	"github.com/golang/glog"
 	gocontext "golang.org/x/net/context"
 
+	corev1 "k8s.io/api/core/v1"
 	kapierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,10 +22,10 @@ import (
 	authorizationapi "k8s.io/kubernetes/pkg/apis/authorization"
 	authorizationclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/authorization/internalversion"
 
+	imageapiv1 "github.com/openshift/api/image/v1"
 	authorizationutil "github.com/openshift/origin/pkg/authorization/util"
 	serverapi "github.com/openshift/origin/pkg/cmd/server/api"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
 	imageclient "github.com/openshift/origin/pkg/image/generated/internalclientset/typed/image/internalversion"
 	"github.com/openshift/origin/pkg/image/importer"
 	"github.com/openshift/origin/pkg/image/importer/dockerv1client"
@@ -181,12 +182,12 @@ func (r *REST) Create(ctx apirequest.Context, obj runtime.Object, _ bool) (runti
 	}
 
 	// only load secrets if we need them
-	credentials := importer.NewLazyCredentialsForSecrets(func() ([]kapiv1.Secret, error) {
+	credentials := importer.NewLazyCredentialsForSecrets(func() ([]corev1.Secret, error) {
 		secrets, err := r.isClient.ImageStreams(namespace).Secrets(isi.Name, metav1.ListOptions{})
 		if err != nil {
 			return nil, err
 		}
-		secretsv1 := make([]kapiv1.Secret, len(secrets.Items))
+		secretsv1 := make([]corev1.Secret, len(secrets.Items))
 		for i, secret := range secrets.Items {
 			err := kapiv1.Convert_api_Secret_To_v1_Secret(&secret, &secretsv1[i], nil)
 			if err != nil {
@@ -234,10 +235,7 @@ func (r *REST) Create(ctx apirequest.Context, obj runtime.Object, _ bool) (runti
 	_, hasAnnotation := stream.Annotations[imageapi.DockerImageRepositoryCheckAnnotation]
 	nextGeneration := stream.Generation + 1
 
-	original, err := kapi.Scheme.DeepCopy(stream)
-	if err != nil {
-		return nil, err
-	}
+	original := stream.DeepCopy()
 
 	// walk the retrieved images, ensuring each one exists in etcd
 	importedImages := make(map[string]error)
@@ -329,7 +327,7 @@ func (r *REST) Create(ctx apirequest.Context, obj runtime.Object, _ bool) (runti
 	} else {
 		if hasAnnotation && !hasChanges {
 			glog.V(4).Infof("stream did not change: %#v", stream)
-			obj, err = original.(*imageapi.ImageStream), nil
+			obj, err = original, nil
 		} else {
 			if glog.V(4) {
 				glog.V(4).Infof("updating stream %s", diff.ObjectDiff(original, stream))
@@ -343,7 +341,7 @@ func (r *REST) Create(ctx apirequest.Context, obj runtime.Object, _ bool) (runti
 		// if we have am admission limit error then record the conditions on the original stream.  Quota errors
 		// will be recorded by the importer.
 		if quotautil.IsErrorLimitExceeded(err) {
-			originalStream := original.(*imageapi.ImageStream)
+			originalStream := original
 			recordLimitExceededStatus(originalStream, stream, err, now, nextGeneration)
 			var limitErr error
 			obj, _, limitErr = r.internalStreams.Update(ctx, stream.Name, rest.DefaultUpdatedObjectInfo(originalStream, kapi.Scheme))

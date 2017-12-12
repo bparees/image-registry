@@ -14,8 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	kapi "k8s.io/kubernetes/pkg/api"
 
+	templateapiv1 "github.com/openshift/api/template/v1"
 	templateapi "github.com/openshift/origin/pkg/template/apis/template"
-	templateapiv1 "github.com/openshift/origin/pkg/template/apis/template/v1"
 	"github.com/openshift/origin/pkg/template/generator"
 
 	_ "github.com/openshift/origin/pkg/api/install"
@@ -338,6 +338,48 @@ func TestEvaluateLabels(t *testing.T) {
 				"labels":{"key2":"v3"}
 			}`,
 			Labels: map[string]string{"key2": "v3"},
+		},
+		"parameterised labels": {
+			Input: `{
+				"kind":"Template", "apiVersion":"v1",
+				"objects": [
+					{
+						"kind": "Service", "apiVersion": "v1",
+						"metadata": {"labels": {"key1": "v1", "key2": "v2"}}
+					}
+				],
+				"parameters": [
+					{
+						"name": "KEY",
+						"value": "key"
+					},
+					{
+						"name": "VALUE",
+						"value": "value"
+					}
+				]
+			}`,
+			Output: `{
+				"kind":"Template","apiVersion":"template.openshift.io/v1","metadata":{"creationTimestamp":null},
+				"objects":[
+					{
+						"apiVersion":"v1","kind":"Service","metadata":{
+						"labels":{"key":"value","key1":"v1","key2":"v2"}}
+					}
+				],
+				"parameters":[
+					{
+						"name":"KEY",
+						"value":"key"
+					},
+					{
+						"name":"VALUE",
+						"value":"value"
+					}
+				],
+				"labels":{"key":"value"}
+			}`,
+			Labels: map[string]string{"${KEY}": "${VALUE}"},
 		},
 	}
 

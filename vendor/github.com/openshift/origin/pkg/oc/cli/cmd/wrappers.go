@@ -18,10 +18,11 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/cmd/templates"
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 
-	"github.com/openshift/origin/pkg/cmd/util/clientcmd"
+	cmdconfig "github.com/openshift/origin/pkg/client/config"
+	cmdutil "github.com/openshift/origin/pkg/cmd/util"
 	"github.com/openshift/origin/pkg/oc/cli/cmd/create"
-	cmdconfig "github.com/openshift/origin/pkg/oc/cli/config"
 	"github.com/openshift/origin/pkg/oc/cli/describe"
+	"github.com/openshift/origin/pkg/oc/cli/util/clientcmd"
 )
 
 func adjustCmdExamples(cmd *cobra.Command, parentName string, name string) {
@@ -228,7 +229,7 @@ var (
 	  * zsh completions are only supported in versions of zsh >= 5.2`)
 )
 
-func NewCmdCompletion(fullName string, f *clientcmd.Factory, out io.Writer) *cobra.Command {
+func NewCmdCompletion(fullName string, out io.Writer) *cobra.Command {
 	cmdHelpName := fullName
 
 	if strings.HasSuffix(fullName, "completion") {
@@ -607,7 +608,7 @@ var (
 
 // NewCmdApply is a wrapper for the Kubernetes cli apply command
 func NewCmdApply(fullName string, f *clientcmd.Factory, out, errOut io.Writer) *cobra.Command {
-	cmd := kcmd.NewCmdApply(f, out, errOut)
+	cmd := kcmd.NewCmdApply(fullName, f, out, errOut)
 	cmd.Long = applyLong
 	cmd.Example = fmt.Sprintf(applyExample, fullName)
 	return cmd
@@ -783,7 +784,7 @@ func NewCmdCp(fullName string, f *clientcmd.Factory, in io.Reader, out, errout i
 }
 
 func NewCmdAuth(fullName string, f *clientcmd.Factory, out, errout io.Writer) *cobra.Command {
-	cmd := kcmdauth.NewCmdAuth(f, out, errout)
+	cmd := cmdutil.ReplaceCommandName("kubectl", fullName, templates.Normalize(kcmdauth.NewCmdAuth(f, out, errout)))
 	return cmd
 }
 

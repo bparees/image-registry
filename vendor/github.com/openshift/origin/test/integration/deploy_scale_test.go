@@ -1,12 +1,15 @@
 package integration
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
-	extensionsv1beta1 "k8s.io/kubernetes/pkg/apis/extensions/v1beta1"
+	internalextensionsv1beta1 "k8s.io/kubernetes/pkg/apis/extensions/v1beta1"
 
 	deployapi "github.com/openshift/origin/pkg/apps/apis/apps"
 	deploytest "github.com/openshift/origin/pkg/apps/apis/apps/test"
@@ -36,7 +39,7 @@ func TestDeployScale(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	adminAppsClient := appsclient.NewForConfigOrDie(adminConfig)
+	adminAppsClient := appsclient.NewForConfigOrDie(adminConfig).Apps()
 
 	config := deploytest.OkDeploymentConfig(0)
 	config.Namespace = namespace
@@ -48,6 +51,40 @@ func TestDeployScale(t *testing.T) {
 		t.Fatalf("Couldn't create DeploymentConfig: %v %#v", err, config)
 	}
 	generation := dc.Generation
+
+	{
+		// Get scale subresource
+		legacyPath := fmt.Sprintf("/oapi/v1/namespaces/%s/deploymentconfigs/%s/scale", dc.Namespace, dc.Name)
+		legacyScale := &unstructured.Unstructured{}
+		if err := adminAppsClient.RESTClient().Get().AbsPath(legacyPath).Do().Into(legacyScale); err != nil {
+			t.Fatal(err)
+		}
+		// Ensure correct type
+		if legacyScale.GetAPIVersion() != "extensions/v1beta1" {
+			t.Fatalf("Expected extensions/v1beta1, got %v", legacyScale.GetAPIVersion())
+		}
+		// Ensure we can submit the same type back
+		if err := adminAppsClient.RESTClient().Put().AbsPath(legacyPath).Body(legacyScale).Do().Error(); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	{
+		// Get scale subresource
+		scalePath := fmt.Sprintf("/apis/apps.openshift.io/v1/namespaces/%s/deploymentconfigs/%s/scale", dc.Namespace, dc.Name)
+		scale := &unstructured.Unstructured{}
+		if err := adminAppsClient.RESTClient().Get().AbsPath(scalePath).Do().Into(scale); err != nil {
+			t.Fatal(err)
+		}
+		// Ensure correct type
+		if scale.GetAPIVersion() != "extensions/v1beta1" {
+			t.Fatalf("Expected extensions/v1beta1, got %v", scale.GetAPIVersion())
+		}
+		// Ensure we can submit the same type back
+		if err := adminAppsClient.RESTClient().Put().AbsPath(scalePath).Body(scale).Do().Error(); err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	condition := func() (bool, error) {
 		config, err := adminAppsClient.DeploymentConfigs(namespace).Get(dc.Name, metav1.GetOptions{})
@@ -71,7 +108,7 @@ func TestDeployScale(t *testing.T) {
 	scaleUpdate := deployapi.ScaleFromConfig(dc)
 	scaleUpdate.Spec.Replicas = 3
 	scaleUpdatev1beta1 := &extensionsv1beta1.Scale{}
-	if err := extensionsv1beta1.Convert_extensions_Scale_To_v1beta1_Scale(scaleUpdate, scaleUpdatev1beta1, nil); err != nil {
+	if err := internalextensionsv1beta1.Convert_extensions_Scale_To_v1beta1_Scale(scaleUpdate, scaleUpdatev1beta1, nil); err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 	updatedScale, err := adminAppsClient.DeploymentConfigs(namespace).UpdateScale(config.Name, scaleUpdatev1beta1)

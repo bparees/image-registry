@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	kapi "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/controller"
 
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
@@ -106,8 +105,13 @@ func (s *SignatureImportController) work() bool {
 
 	err := s.syncImageSignatures(key.(string))
 	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("error syncing image %s, it will be retried: %v", key.(string), err))
-		s.queue.AddRateLimited(key)
+		if _, ok := err.(GetSignaturesError); !ok {
+			utilruntime.HandleError(fmt.Errorf("error syncing image %s, it will be retried: %v", key.(string), err))
+		}
+
+		if s.queue.NumRequeues(key) < 5 {
+			s.queue.AddRateLimited(key)
+		}
 		return true
 	}
 
@@ -149,12 +153,7 @@ func (s *SignatureImportController) syncImageSignatures(key string) error {
 		return nil
 	}
 
-	t, err := kapi.Scheme.DeepCopy(image)
-	if err != nil {
-		return err
-	}
-	newImage := t.(*imageapi.Image)
-
+	newImage := image.DeepCopy()
 	shouldUpdate := false
 
 	// Only add new signatures, do not override existing stored signatures as that

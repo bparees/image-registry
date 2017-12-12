@@ -44,6 +44,8 @@ type CreateNodeConfigOptions struct {
 	DNSRecursiveResolvConf string
 	ListenAddr             flagtypes.Addr
 
+	KubeletArguments map[string][]string
+
 	ClientCertFile    string
 	ClientKeyFile     string
 	ServerCertFile    string
@@ -65,7 +67,7 @@ func NewCommandNodeConfig(commandName string, fullName string, out io.Writer) *c
 		Short: "Create a configuration bundle for a node",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := options.Validate(args); err != nil {
-				kcmdutil.CheckErr(kcmdutil.UsageError(cmd, err.Error()))
+				kcmdutil.CheckErr(kcmdutil.UsageErrorf(cmd, err.Error()))
 			}
 
 			if _, err := options.CreateNodeFolder(); err != nil {
@@ -419,6 +421,8 @@ func (o CreateNodeConfigOptions) MakeNodeConfig(serverCertFile, serverKeyFile, n
 		NetworkConfig: configapi.NodeNetworkConfig{
 			NetworkPluginName: o.NetworkPluginName,
 		},
+
+		KubeletArguments: o.KubeletArguments,
 
 		EnableUnidling: true,
 	}
