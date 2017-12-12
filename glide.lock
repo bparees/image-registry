@@ -1,5 +1,5 @@
-hash: 44a7018900445ffe0895eb4926895df2820d6409f932d7cbe95167548d785ebf
-updated: 2017-12-12T10:52:43.291726281-05:00
+hash: 1970bd5278ca3e3114bfa6bb5ddcd05aac1fcaed54d0a4846516a00895a845a3
+updated: 2017-12-12T14:27:21.488822206-05:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -38,7 +38,7 @@ imports:
   subpackages:
   - storage
 - name: github.com/Azure/go-ansiterm
-  version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
+  version: 70b2c90b260171e829f1ebd7c17f600c11858dbe
   subpackages:
   - winterm
 - name: github.com/beorn7/perks
@@ -48,7 +48,7 @@ imports:
 - name: github.com/blang/semver
   version: 2ee87856327ba09384cabd113bc6b5d174e9ec0f
 - name: github.com/bshuster-repo/logrus-logstash-hook
-  version: ebf008572634916f3a9433d9471a0cd3f68fc772
+  version: 0e6d502573042a6563419fbcce4f284600bfe929
 - name: github.com/certifi/gocertifi
   version: a4ab0227d360091084658029ec8ae45f989fba3e
 - name: github.com/cloudflare/cfssl
@@ -321,7 +321,7 @@ imports:
   - user/clientset/versioned/scheme
   - user/clientset/versioned/typed/user/v1
 - name: github.com/openshift/origin
-  version: cbcbb490b2abbc808abb269a25f03a9b228e2a32
+  version: 4f0db51ab1ca9e441b3b7466cac4c6f06dc8e3e8
   subpackages:
   - pkg/api/apihelpers
   - pkg/api/legacy
@@ -418,8 +418,6 @@ imports:
   version: fababb0555f21315d1a34af6615a16eaab44396b
 - name: github.com/Sirupsen/logrus
   version: 55eb11d21d2a31a3cc93838241d04800f52e823d
-- name: github.com/sirupsen/logrus
-  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/skynetservices/skydns
   version: 30763c4e568fe411f1663af553c063cec8879929
   repo: https://github.com/openshift/skynetservices-skydns
