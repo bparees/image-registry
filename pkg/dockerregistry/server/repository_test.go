@@ -27,11 +27,11 @@ import (
 	kapi "k8s.io/kubernetes/pkg/api"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
+	"github.com/openshift/image-registry/origin-common/util"
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	"github.com/openshift/origin/pkg/image/util"
 )
 
 const (

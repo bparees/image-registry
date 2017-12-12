@@ -21,8 +21,8 @@ import (
 	kapi "k8s.io/kubernetes/pkg/api"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
+	"github.com/openshift/image-registry/origin-common/util"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	"github.com/openshift/origin/pkg/image/util"
 
 	// install image API for k8s.io/kubernetes/pkg/api.Scheme.Converter
 	_ "github.com/openshift/origin/pkg/image/apis/image/install"
