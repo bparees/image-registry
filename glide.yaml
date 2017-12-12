@@ -4,6 +4,8 @@ import:
   version: master
 - package: github.com/openshift/api
   version: master
+- package: github.com/openshift/client-go
+  version: master
 - package: github.com/docker/distribution
   version: image-registry-release-2.6.2
   repo: git@github.com:openshift/docker-distribution
