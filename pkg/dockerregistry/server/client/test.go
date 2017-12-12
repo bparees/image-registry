@@ -3,7 +3,7 @@ package client
 import (
 	kcoreclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/internalversion"
 
-	imageclientv1 "github.com/openshift/origin/pkg/image/generated/clientset/typed/image/v1"
+	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
 )
 
 type fakeRegistryClient struct {

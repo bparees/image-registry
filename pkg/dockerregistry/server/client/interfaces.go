@@ -11,8 +11,8 @@ import (
 	authclientv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	authapiv1 "k8s.io/kubernetes/pkg/apis/authorization/v1"
 
-	imageclientv1 "github.com/openshift/origin/pkg/image/generated/clientset/typed/image/v1"
-	userclientv1 "github.com/openshift/origin/pkg/user/generated/clientset/typed/user/v1"
+	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
+	userclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/user/v1"
 )
 
 type UsersInterfacer interface {

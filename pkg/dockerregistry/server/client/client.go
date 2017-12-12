@@ -5,9 +5,9 @@ import (
 	restclient "k8s.io/client-go/rest"
 	kcoreclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/internalversion"
 
+	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
+	userclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/user/v1"
 	"github.com/openshift/image-registry/pkg/origin-common/clientcmd"
-	imageclientv1 "github.com/openshift/origin/pkg/image/generated/clientset/typed/image/v1"
-	userclientv1 "github.com/openshift/origin/pkg/user/generated/clientset/typed/user/v1"
 )
 
 // RegistryClient provides Origin and Kubernetes clients to Docker Registry.

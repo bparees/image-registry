@@ -5,10 +5,10 @@ import (
 	"k8s.io/client-go/rest"
 	kapi "k8s.io/kubernetes/pkg/api/v1"
 
+	authorizationv1 "github.com/openshift/client-go/image/clientset/versioned/authorization/v1"
+	projectv1 "github.com/openshift/client-go/image/clientset/versioned/project/v1"
 	authorizationapiv1 "github.com/openshift/origin/pkg/authorization/apis/authorization/v1"
-	authorizationv1 "github.com/openshift/origin/pkg/authorization/generated/clientset/typed/authorization/v1"
 	projectapiv1 "github.com/openshift/origin/pkg/project/apis/project/v1"
-	projectv1 "github.com/openshift/origin/pkg/project/generated/clientset/typed/project/v1"
 )
 
 func CreateProject(clientConfig *rest.Config, namespace string, adminUser string) (*projectapiv1.Project, error) {
