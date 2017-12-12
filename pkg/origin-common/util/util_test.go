@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/diff"
-	kapihelper "k8s.io/kubernetes/pkg/api/helper"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 )
@@ -219,7 +219,7 @@ func TestImageWithMetadata(t *testing.T) {
 		if test.expectError {
 			continue
 		}
-		if e, a := test.expectedImage, imageWithMetadata; !kapihelper.Semantic.DeepEqual(e, a) {
+		if e, a := test.expectedImage, imageWithMetadata; !apiequality.Semantic.DeepEqual(e, a) {
 			t.Errorf("%s: image: %s", name, diff.ObjectDiff(e, a))
 		}
 	}

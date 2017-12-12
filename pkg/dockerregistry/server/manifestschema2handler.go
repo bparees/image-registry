@@ -12,7 +12,7 @@ import (
 	"github.com/docker/distribution/manifest/schema2"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/origin-common/util"
 )
 
 var (

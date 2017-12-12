@@ -6,7 +6,7 @@ import (
 	"github.com/docker/distribution/digest"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 // pullthroughManifestService wraps a distribution.ManifestService
@@ -43,7 +43,7 @@ func (m *pullthroughManifestService) remoteGet(ctx context.Context, dgst digest.
 		return nil, err
 	}
 
-	ref, err := imageapi.ParseDockerImageReference(image.DockerImageReference)
+	ref, err := util.ParseDockerImageReference(image.DockerImageReference)
 	if err != nil {
 		context.GetLogger(ctx).Errorf("bad DockerImageReference (%q) in Image %s/%s@%s: %v", image.DockerImageReference, m.repo.namespace, m.repo.name, dgst.String(), err)
 		return nil, err
@@ -75,7 +75,7 @@ func (m *pullthroughManifestService) remoteGet(ctx context.Context, dgst digest.
 	return manifest, err
 }
 
-func (m *pullthroughManifestService) getRemoteRepositoryClient(ctx context.Context, ref *imageapi.DockerImageReference, dgst digest.Digest, options ...distribution.ManifestServiceOption) (distribution.Repository, error) {
+func (m *pullthroughManifestService) getRemoteRepositoryClient(ctx context.Context, ref *imageapiv1.DockerImageReference, dgst digest.Digest, options ...distribution.ManifestServiceOption) (distribution.Repository, error) {
 	retriever := getImportContext(ctx, m.repo.registryOSClient, m.repo.namespace, m.repo.name)
 
 	// determine, whether to fall-back to insecure transport based on a specification of image's tag

@@ -13,7 +13,7 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 	"github.com/openshift/origin/pkg/image/importer"
 )
 
@@ -63,7 +63,7 @@ func NewBlobGetterService(
 // imagePullthroughSpec contains a reference of remote image to pull associated with an insecure flag for the
 // corresponding registry.
 type imagePullthroughSpec struct {
-	dockerImageReference *imageapi.DockerImageReference
+	dockerImageReference *imageapiv1.DockerImageReference
 	insecure             bool
 }
 
@@ -299,7 +299,7 @@ func identifyCandidateRepositories(
 	insecureRegistries := make(map[string]bool)
 
 	// identify the canonical location of referenced registries to search
-	search := make(map[string]*imageapi.DockerImageReference)
+	search := make(map[string]*imageapiv1.DockerImageReference)
 	for _, tagEvent := range is.Status.Tags {
 		tag := tagEvent.Tag
 		var candidates []imageapiv1.TagEvent

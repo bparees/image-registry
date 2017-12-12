@@ -21,17 +21,17 @@ import (
 	"github.com/docker/distribution/registry/storage/driver/inmemory"
 	"github.com/docker/libtrust"
 
+	kruntime "k8s.io/apimachiner/pkg/runtime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/diff"
 	clientgotesting "k8s.io/client-go/testing"
-	kapi "k8s.io/kubernetes/pkg/api"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/origin-common/util"
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 const (
@@ -594,7 +594,7 @@ func storeTestImage(
 		dgst = digest.FromBytes(payload)
 	} //TODO v2
 
-	image := &imageapi.Image{
+	image := &imageapiv1.Image{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: dgst.String(),
 		},
@@ -603,7 +603,7 @@ func storeTestImage(
 	}
 
 	if managedByOpenShift {
-		image.Annotations = map[string]string{imageapi.ManagedByOpenShiftAnnotation: "true"}
+		image.Annotations = map[string]string{util.ManagedByOpenShiftAnnotation: "true"}
 	}
 
 	if schemaVersion == 1 {
@@ -620,7 +620,7 @@ func storeTestImage(
 		return nil, err
 	}
 	newImage := imageapiv1.Image{}
-	if err := kapi.Scheme.Converter().Convert(image, &newImage, 0, nil); err != nil {
+	if err := kruntime.Scheme.Converter().Convert(image, &newImage, 0, nil); err != nil {
 		return nil, err
 	}
 

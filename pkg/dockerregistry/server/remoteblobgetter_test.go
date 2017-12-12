@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/diff"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 func TestIdentifyCandidateRepositories(t *testing.T) {
@@ -91,7 +91,7 @@ func TestIdentifyCandidateRepositories(t *testing.T) {
 			name: "search secondary results in insecure image stream",
 			is: &imageapiv1.ImageStream{
 				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{imageapi.InsecureRepositoryAnnotation: "true"},
+					Annotations: map[string]string{util.InsecureRepositoryAnnotation: "true"},
 				},
 				Spec: imageapiv1.ImageStreamSpec{
 					Tags: []imageapiv1.TagReference{
@@ -129,7 +129,7 @@ func TestIdentifyCandidateRepositories(t *testing.T) {
 			name: "empty secondary search",
 			is: &imageapiv1.ImageStream{
 				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{imageapi.InsecureRepositoryAnnotation: "true"},
+					Annotations: map[string]string{util.InsecureRepositoryAnnotation: "true"},
 				},
 				Spec: imageapiv1.ImageStreamSpec{
 					Tags: []imageapiv1.TagReference{
@@ -241,7 +241,7 @@ func TestIdentifyCandidateRepositories(t *testing.T) {
 }
 
 func makeTestImagePullthroughSpec(t *testing.T, ref string, insecure bool) imagePullthroughSpec {
-	r, err := imageapi.ParseDockerImageReference(ref)
+	r, err := util.ParseDockerImageReference(ref)
 	if err != nil {
 		t.Fatal(err)
 	}

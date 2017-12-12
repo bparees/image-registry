@@ -18,7 +18,7 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 func createTestRegistryServer(t *testing.T, ctx context.Context) *httptest.Server {
@@ -89,7 +89,7 @@ func TestPullthroughManifests(t *testing.T) {
 
 	fos, imageClient := registrytest.NewFakeOpenShiftWithClient(backgroundCtx)
 	registrytest.AddImageStream(t, fos, namespace, repo, map[string]string{
-		imageapi.InsecureRepositoryAnnotation: "true",
+		util.InsecureRepositoryAnnotation: "true",
 	})
 	registrytest.AddImage(t, fos, image, namespace, repo, tag)
 
@@ -243,7 +243,7 @@ func TestPullthroughManifestInsecure(t *testing.T) {
 			manifestDigest: ms1dgst,
 			fakeOpenShiftInit: func(fos *registrytest.FakeOpenShift) {
 				registrytest.AddImageStream(t, fos, namespace, repo, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "true",
+					util.InsecureRepositoryAnnotation: "true",
 				})
 				registrytest.AddImage(t, fos, ms1img, namespace, repo, "schema1")
 			},
@@ -258,7 +258,7 @@ func TestPullthroughManifestInsecure(t *testing.T) {
 			manifestDigest: ms2dgst,
 			fakeOpenShiftInit: func(fos *registrytest.FakeOpenShift) {
 				registrytest.AddImageStream(t, fos, namespace, repo, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "true",
+					util.InsecureRepositoryAnnotation: "true",
 				})
 				registrytest.AddImage(t, fos, ms2img, namespace, repo, "schema2")
 			},
@@ -273,7 +273,7 @@ func TestPullthroughManifestInsecure(t *testing.T) {
 			manifestDigest: ms1dgst,
 			fakeOpenShiftInit: func(fos *registrytest.FakeOpenShift) {
 				registrytest.AddImageStream(t, fos, namespace, repo, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "false",
+					util.InsecureRepositoryAnnotation: "false",
 				})
 				registrytest.AddImage(t, fos, ms1img, namespace, repo, "schema1")
 			},
@@ -333,7 +333,7 @@ func TestPullthroughManifestInsecure(t *testing.T) {
 
 				registrytest.AddUntaggedImage(t, fos, image)
 				registrytest.AddImageStream(t, fos, namespace, repo, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "true",
+					util.InsecureRepositoryAnnotation: "true",
 				})
 				registrytest.AddImageStreamTag(t, fos, image, namespace, repo, &imageapiv1.TagReference{
 					Name: "schema2",
@@ -461,10 +461,10 @@ func TestPullthroughManifestDockerReference(t *testing.T) {
 
 	fos, imageClient := registrytest.NewFakeOpenShiftWithClient(backgroundCtx)
 	registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-		imageapi.InsecureRepositoryAnnotation: "true",
+		util.InsecureRepositoryAnnotation: "true",
 	})
 	registrytest.AddImageStream(t, fos, namespace, repo2, map[string]string{
-		imageapi.InsecureRepositoryAnnotation: "true",
+		util.InsecureRepositoryAnnotation: "true",
 	})
 	registrytest.AddImage(t, fos, &image1, namespace, repo1, tag)
 	registrytest.AddImage(t, fos, &image2, namespace, repo2, tag)

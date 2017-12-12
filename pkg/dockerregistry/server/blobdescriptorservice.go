@@ -16,7 +16,6 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
 )
 
 const (
@@ -70,7 +69,7 @@ func (bs *blobDescriptorService) Stat(ctx context.Context, dgst digest.Digest) (
 	desc, err := bs.BlobDescriptorService.Stat(ctx, dgst)
 	if err == nil {
 		// and remember the association
-		repo.cachedLayers.RememberDigest(dgst, repo.config.blobRepositoryCacheTTL, imageapi.DockerImageReference{
+		repo.cachedLayers.RememberDigest(dgst, repo.config.blobRepositoryCacheTTL, imageapiv1.DockerImageReference{
 			Namespace: repo.namespace,
 			Name:      repo.name,
 		}.Exact())
@@ -111,7 +110,7 @@ func (bs *blobDescriptorService) Clear(ctx context.Context, dgst digest.Digest) 
 		return err
 	}
 
-	repo.cachedLayers.ForgetDigest(dgst, imageapi.DockerImageReference{
+	repo.cachedLayers.ForgetDigest(dgst, imageapiv1.DockerImageReference{
 		Namespace: repo.namespace,
 		Name:      repo.name,
 	}.Exact())
@@ -122,7 +121,7 @@ func (bs *blobDescriptorService) Clear(ctx context.Context, dgst digest.Digest) 
 // given repository. If not found locally, image stream's images will be iterated and fetched from newest to
 // oldest until found. Each processed image will update local cache of blobs.
 func imageStreamHasBlob(r *repository, dgst digest.Digest) bool {
-	repoCacheName := imageapi.DockerImageReference{Namespace: r.namespace, Name: r.name}.Exact()
+	repoCacheName := imageapiv1.DockerImageReference{Namespace: r.namespace, Name: r.name}.Exact()
 	if r.cachedLayers.RepositoryHasBlob(repoCacheName, dgst) {
 		context.GetLogger(r.ctx).Debugf("found cached blob %q in repository %s", dgst.String(), r.Named().Name())
 		return true
@@ -228,7 +227,7 @@ func imageHasBlob(
 		}
 	}
 
-	meta, ok := image.DockerImageMetadata.Object.(*imageapi.DockerImage)
+	meta, ok := image.DockerImageMetadata.Object.(*imageapiv1.DockerImage)
 	if !ok {
 		context.GetLogger(r.ctx).Errorf("image does not have metadata %s", imageName)
 		return false

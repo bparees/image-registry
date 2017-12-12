@@ -13,11 +13,11 @@ import (
 	"github.com/docker/distribution/manifest/schema1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kapi "k8s.io/kubernetes/pkg/api/v1"
+	kapiv1 "k8s.io/pkg/api/v1"
 
+	imageapiv1 "github.com/openshift/api/image/v1"
 	imagev1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 
 	"github.com/openshift/image-registry/pkg/testframework"
 )
@@ -178,14 +178,14 @@ func TestPullThroughInsecure(t *testing.T) {
 			Namespace: namespace,
 			Name:      "myimagestream",
 			Annotations: map[string]string{
-				imageapi.InsecureRepositoryAnnotation: "true",
+				util.InsecureRepositoryAnnotation: "true",
 			},
 		},
 		Spec: imageapiv1.ImageStreamImportSpec{
 			Import: true,
 			Images: []imageapiv1.ImageImportSpec{
 				{
-					From: kapi.ObjectReference{
+					From: kapiv1.ObjectReference{
 						Kind: "DockerImage",
 						Name: srvurl.Host + "/" + isname + ":" + repotag,
 					},
@@ -228,7 +228,7 @@ func TestPullThroughInsecure(t *testing.T) {
 	if istream.Annotations == nil {
 		istream.Annotations = make(map[string]string)
 	}
-	istream.Annotations[imageapi.InsecureRepositoryAnnotation] = "true"
+	istream.Annotations[util.InsecureRepositoryAnnotation] = "true"
 
 	_, err = adminImageClient.ImageStreams(istream.Namespace).Update(istream)
 	if err != nil {
@@ -249,7 +249,7 @@ func TestPullThroughInsecure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("Run testPullThroughStatBlob (%s == true, spec.tags[%q].importPolicy.insecure == true)...", imageapi.InsecureRepositoryAnnotation, repotag)
+	t.Logf("Run testPullThroughStatBlob (%s == true, spec.tags[%q].importPolicy.insecure == true)...", util.InsecureRepositoryAnnotation, repotag)
 	for digest := range descriptors {
 		if err := testPullThroughStatBlob(registry.BaseURL(), &stream, testuser.Name, testuser.Token, digest); err != nil {
 			t.Fatal(err)
@@ -260,14 +260,14 @@ func TestPullThroughInsecure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	istream.Annotations[imageapi.InsecureRepositoryAnnotation] = "false"
+	istream.Annotations[util.InsecureRepositoryAnnotation] = "false"
 
 	_, err = adminImageClient.ImageStreams(istream.Namespace).Update(istream)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf("Run testPullThroughStatBlob (%s == false, spec.tags[%q].importPolicy.insecure == true)...", imageapi.InsecureRepositoryAnnotation, repotag)
+	t.Logf("Run testPullThroughStatBlob (%s == false, spec.tags[%q].importPolicy.insecure == true)...", util.InsecureRepositoryAnnotation, repotag)
 	for digest := range descriptors {
 		if err := testPullThroughStatBlob(registry.BaseURL(), &stream, testuser.Name, testuser.Token, digest); err != nil {
 			t.Fatal(err)
@@ -289,7 +289,7 @@ func TestPullThroughInsecure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("Run testPullThroughStatBlob (%s == false, spec.tags[%q].importPolicy.insecure == false)...", imageapi.InsecureRepositoryAnnotation, repotag)
+	t.Logf("Run testPullThroughStatBlob (%s == false, spec.tags[%q].importPolicy.insecure == false)...", util.InsecureRepositoryAnnotation, repotag)
 	for digest := range descriptors {
 		if err := testPullThroughStatBlob(registry.BaseURL(), &stream, testuser.Name, testuser.Token, digest); err == nil {
 			t.Fatal("unexpexted access to insecure blobs")

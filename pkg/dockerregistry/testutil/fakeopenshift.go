@@ -13,7 +13,7 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	imagefakeclient "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1/fake"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 // FakeOpenShift is an in-mempory reactors for fake.Client.
@@ -179,7 +179,7 @@ func (fos *FakeOpenShift) CreateImageStreamMapping(namespace string, ism *imagea
 }
 
 func (fos *FakeOpenShift) CreateImageStreamTag(namespace string, istag *imageapiv1.ImageStreamTag) (*imageapiv1.ImageStreamTag, error) {
-	imageStreamName, imageTag, ok := imageapi.SplitImageStreamTag(istag.Name)
+	imageStreamName, imageTag, ok := util.SplitImageStreamTag(istag.Name)
 	if !ok {
 		return nil, fmt.Errorf("%q must be of the form <stream_name>:<tag>", istag.Name)
 	}
@@ -253,7 +253,7 @@ func (fos *FakeOpenShift) CreateImageStreamTag(namespace string, istag *imageapi
 }
 
 func (fos *FakeOpenShift) GetImageStreamImage(namespace string, id string) (*imageapiv1.ImageStreamImage, error) {
-	name, imageID, err := imageapi.ParseImageStreamImageName(id)
+	name, imageID, err := util.ParseImageStreamImageName(id)
 	if err != nil {
 		return nil, errors.NewBadRequest("ImageStreamImages must be retrieved with <name>@<id>")
 	}
@@ -264,7 +264,7 @@ func (fos *FakeOpenShift) GetImageStreamImage(namespace string, id string) (*ima
 	}
 
 	if repo.Status.Tags == nil {
-		return nil, errors.NewNotFound(imageapi.Resource("imagestreamimage"), id)
+		return nil, errors.NewNotFound(imageapiv1.Resource("imagestreamimage"), id)
 	}
 
 	event, err := imageapiv1.ResolveImageID(repo, imageID)
@@ -286,7 +286,7 @@ func (fos *FakeOpenShift) GetImageStreamImage(namespace string, id string) (*ima
 	isi := imageapiv1.ImageStreamImage{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:         namespace,
-			Name:              imageapi.JoinImageStreamImage(name, imageID),
+			Name:              util.JoinImageStreamImage(name, imageID),
 			CreationTimestamp: image.ObjectMeta.CreationTimestamp,
 			Annotations:       repo.Annotations,
 		},

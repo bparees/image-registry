@@ -3,8 +3,6 @@ import:
 - package: github.com/docker/distribution
   version: image-registry-release-2.6.2
   repo: git@github.com:openshift/docker-distribution
-- package: github.com/openshift/origin
-  version: release-3.8
 - package: github.com/openshift/api
   version: release-3.8
 - package: github.com/openshift/client-go
@@ -12,9 +10,6 @@ import:
 - package: k8s.io/code-generator
   version: release-1.8.1
   repo: git@github.com:openshift/kubernetes-code-generator
-- package: k8s.io/kubernetes
-  version: release-1.8.1
-  repo: git@github.com:openshift/kubernetes
 - package: k8s.io/api
   version: release-1.8.1
   repo:    git@github.com:openshift/kubernetes-api

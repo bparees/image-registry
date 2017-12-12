@@ -10,7 +10,7 @@ import (
 
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 func TestTagGet(t *testing.T) {
@@ -66,9 +66,9 @@ func TestTagGet(t *testing.T) {
 
 	for _, tc := range testcases {
 		if tc.imageManaged {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "true"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "true"
 		} else {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "false"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "false"
 		}
 
 		r := newTestRepository(backgroundCtx, t, namespace, repo, testRepositoryOptions{
@@ -177,9 +177,9 @@ func TestTagCreation(t *testing.T) {
 
 	for _, tc := range testcases {
 		if tc.imageManaged {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "true"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "true"
 		} else {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "false"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "false"
 		}
 
 		r := newTestRepository(ctx, t, namespace, repo, testRepositoryOptions{
@@ -303,9 +303,9 @@ func TestTagDeletion(t *testing.T) {
 
 	for _, tc := range testcases {
 		if tc.imageManaged {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "true"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "true"
 		} else {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "false"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "false"
 		}
 
 		r := newTestRepository(ctx, t, namespace, repo, testRepositoryOptions{
@@ -405,9 +405,9 @@ func TestTagGetAll(t *testing.T) {
 
 	for _, tc := range testcases {
 		if tc.imageManaged {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "true"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "true"
 		} else {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "false"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "false"
 		}
 
 		r := newTestRepository(ctx, t, namespace, repo, testRepositoryOptions{
@@ -509,9 +509,9 @@ func TestTagLookup(t *testing.T) {
 
 	for _, tc := range testcases {
 		if tc.imageManaged {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "true"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "true"
 		} else {
-			testImage.Annotations[imageapi.ManagedByOpenShiftAnnotation] = "false"
+			testImage.Annotations[util.ManagedByOpenShiftAnnotation] = "false"
 		}
 
 		r := newTestRepository(ctx, t, namespace, repo, testRepositoryOptions{

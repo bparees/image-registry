@@ -18,10 +18,10 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageclient "github.com/openshift/origin/pkg/image/generated/internalclientset"
-
+	imageapiv1 "github.com/openshift/api/image/v1"
+	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
 	registryutil "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 	"github.com/openshift/image-registry/pkg/testframework"
 )
 
@@ -54,7 +54,7 @@ func signedManifest(name string, blobs []digest.Digest) ([]byte, digest.Digest, 
 			SchemaVersion: 1,
 		},
 		Name:         name,
-		Tag:          imageapi.DefaultImageTag,
+		Tag:          util.DefaultImageTag,
 		Architecture: "amd64",
 		History:      history,
 		FSLayers:     fsLayers,
@@ -96,15 +96,15 @@ func TestV2RegistryGetTags(t *testing.T) {
 
 	baseURL := registry.BaseURL()
 
-	adminImageClient := imageclient.NewForConfigOrDie(master.AdminKubeConfig())
+	adminImageClient := imageclientv1.NewForConfigOrDie(master.AdminKubeConfig())
 
-	stream := imageapi.ImageStream{
+	stream := imageapiv1.ImageStream{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      "test",
 		},
 	}
-	if _, err := adminImageClient.ImageStreams(namespace).Create(&stream); err != nil {
+	if _, err := adminimageclientv1.ImageStreams(namespace).Create(&stream); err != nil {
 		t.Fatalf("error creating image stream: %s", err)
 	}
 
@@ -133,12 +133,12 @@ func TestV2RegistryGetTags(t *testing.T) {
 	if len(tags) != 1 {
 		t.Fatalf("expected 1 tag, got %d: %v", len(tags), tags)
 	}
-	if tags[0] != imageapi.DefaultImageTag {
+	if tags[0] != util.DefaultImageTag {
 		t.Fatalf("expected latest, got %q", tags[0])
 	}
 
 	// test get by tag
-	url := fmt.Sprintf("%s/v2/%s/%s/manifests/%s", baseURL, namespace, stream.Name, imageapi.DefaultImageTag)
+	url := fmt.Sprintf("%s/v2/%s/%s/manifests/%s", baseURL, namespace, stream.Name, util.DefaultImageTag)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		t.Fatalf("error creating request: %v", err)
@@ -163,7 +163,7 @@ func TestV2RegistryGetTags(t *testing.T) {
 	if retrievedManifest.Name != fmt.Sprintf("%s/%s", namespace, stream.Name) {
 		t.Fatalf("unexpected manifest name: %s", retrievedManifest.Name)
 	}
-	if retrievedManifest.Tag != imageapi.DefaultImageTag {
+	if retrievedManifest.Tag != util.DefaultImageTag {
 		t.Fatalf("unexpected manifest tag: %s", retrievedManifest.Tag)
 	}
 
@@ -192,11 +192,11 @@ func TestV2RegistryGetTags(t *testing.T) {
 	if retrievedManifest.Name != fmt.Sprintf("%s/%s", namespace, stream.Name) {
 		t.Fatalf("unexpected manifest name: %s", retrievedManifest.Name)
 	}
-	if retrievedManifest.Tag != imageapi.DefaultImageTag {
+	if retrievedManifest.Tag != util.DefaultImageTag {
 		t.Fatalf("unexpected manifest tag: %s", retrievedManifest.Tag)
 	}
 
-	image, err := adminImageClient.ImageStreamImages(namespace).Get(imageapi.JoinImageStreamImage(stream.Name, dgst.String()), metav1.GetOptions{})
+	image, err := adminimageclientv1.ImageStreamImages(namespace).Get(util.JoinImageStreamImage(stream.Name, dgst.String()), metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("error getting imageStreamImage: %s", err)
 	}
@@ -214,7 +214,7 @@ func TestV2RegistryGetTags(t *testing.T) {
 	}
 
 	// test auto provisioning
-	otherStream, err := adminImageClient.ImageStreams(namespace).Get("otherrepo", metav1.GetOptions{})
+	otherStream, err := adminimageclientv1.ImageStreams(namespace).Get("otherrepo", metav1.GetOptions{})
 	t.Logf("otherStream=%#v, err=%v", otherStream, err)
 	if err == nil {
 		t.Fatalf("expected error getting otherrepo")
@@ -230,7 +230,7 @@ func TestV2RegistryGetTags(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	otherStream, err = adminImageClient.ImageStreams(namespace).Get("otherrepo", metav1.GetOptions{})
+	otherStream, err = adminimageclientv1.ImageStreams(namespace).Get("otherrepo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error getting otherrepo: %s", err)
 	}
@@ -240,7 +240,7 @@ func TestV2RegistryGetTags(t *testing.T) {
 	if len(otherStream.Status.Tags) != 1 {
 		t.Errorf("expected 1 tag, got %#v", otherStream.Status.Tags)
 	}
-	history, ok := otherStream.Status.Tags[imageapi.DefaultImageTag]
+	history, ok := otherStream.Status.Tags[util.DefaultImageTag]
 	if !ok {
 		t.Fatal("unable to find 'latest' tag")
 	}
@@ -259,7 +259,7 @@ func putManifest(baseURL, namespace, name, user, token string) (digest.Digest, e
 		return "", err
 	}
 
-	putUrl := fmt.Sprintf("%s/v2/%s/%s/manifests/%s", baseURL, namespace, name, imageapi.DefaultImageTag)
+	putUrl := fmt.Sprintf("%s/v2/%s/%s/manifests/%s", baseURL, namespace, name, util.DefaultImageTag)
 	signedManifest, dgst, err := signedManifest(fmt.Sprintf("%s/%s", namespace, name), []digest.Digest{desc.Digest})
 	if err != nil {
 		return "", err

@@ -10,16 +10,14 @@ import (
 	context "github.com/docker/distribution/context"
 	registryauth "github.com/docker/distribution/registry/auth"
 
+	authorizationapiv1 "k8s.io/api/authorization/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	authorizationapi "k8s.io/kubernetes/pkg/apis/authorization/v1"
-
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	"github.com/openshift/origin/pkg/util/httprequest"
 
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/audit"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 type deferredErrors map[string]error
@@ -155,7 +153,7 @@ func (ac *AccessController) wrapErr(ctx context.Context, err error) error {
 		if reqErr != nil {
 			return reqErr
 		}
-		scheme, host := httprequest.SchemeHost(req)
+		scheme, host := util.SchemeHost(req)
 		tokenRealmCopy := *ac.tokenRealm
 		if len(tokenRealmCopy.Scheme) == 0 {
 			tokenRealmCopy.Scheme = scheme
@@ -377,12 +375,12 @@ func verifyOpenShiftUser(ctx context.Context, c client.UsersInterfacer) (string,
 }
 
 func verifyWithSAR(ctx context.Context, resource, namespace, name, verb string, c client.SelfSubjectAccessReviewsNamespacer) error {
-	sar := authorizationapi.SelfSubjectAccessReview{
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: &authorizationapi.ResourceAttributes{
+	sar := authorizationapiv1.SelfSubjectAccessReview{
+		Spec: authorizationapiv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationapiv1.ResourceAttributes{
 				Namespace: namespace,
 				Verb:      verb,
-				Group:     imageapi.GroupName,
+				Group:     util.GroupName,
 				Resource:  resource,
 				Name:      name,
 			},
@@ -414,11 +412,11 @@ func verifyImageSignatureAccess(ctx context.Context, namespace, imageRepo string
 }
 
 func verifyPruneAccess(ctx context.Context, c client.SelfSubjectAccessReviewsNamespacer) error {
-	sar := authorizationapi.SelfSubjectAccessReview{
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: &authorizationapi.ResourceAttributes{
+	sar := authorizationapiv1.SelfSubjectAccessReview{
+		Spec: authorizationapiv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationapiv1.ResourceAttributes{
 				Verb:     "delete",
-				Group:    imageapi.GroupName,
+				Group:    util.GroupName,
 				Resource: "images",
 			},
 		},

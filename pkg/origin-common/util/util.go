@@ -8,28 +8,12 @@ import (
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/registry/api/errcode"
 	disterrors "github.com/docker/distribution/registry/api/v2"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
 
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-)
-
-const (
-	// TODO: move these into github/openshift/api/image
-
-	// DockerImageLayersOrderAnnotation describes layers order in the docker image.
-	DockerImageLayersOrderAnnotation = "image.openshift.io/dockerLayersOrder"
-
-	// DockerImageLayersOrderAscending indicates that image layers are sorted in
-	// the order of their addition (from oldest to latest)
-	DockerImageLayersOrderAscending = "ascending"
-
-	// DockerImageLayersOrderDescending indicates that layers are sorted in
-	// reversed order of their addition (from newest to oldest).
-	DockerImageLayersOrderDescending = "descending"
 )
 
 // ImageWithMetadata mutates the given image. It parses raw DockerImageManifest data stored in the image and
@@ -155,4 +139,197 @@ func ReorderImageLayers(image *imageapiv1.Image) {
 	}
 
 	image.Annotations[imageapiv1.DockerImageLayersOrderAnnotation] = imageapiv1.DockerImageLayersOrderAscending
+}
+
+// SchemeHost returns the scheme and host used to make this request.
+// Suitable for use to compute scheme/host in returned 302 redirect Location.
+// Note the returned host is not normalized, and may or may not contain a port.
+// Returned values are based on the following information:
+//
+// Host:
+// * X-Forwarded-Host/X-Forwarded-Port headers
+// * Host field on the request (parsed from Host header)
+// * Host in the request's URL (parsed from Request-Line)
+//
+// Scheme:
+// * X-Forwarded-Proto header
+// * Existence of TLS information on the request implies https
+// * Scheme in the request's URL (parsed from Request-Line)
+// * Port (if included in calculated Host value, 443 implies https)
+// * Otherwise, defaults to "http"
+func SchemeHost(req *http.Request) (string /*scheme*/, string /*host*/) {
+	forwarded := func(attr string) string {
+		// Get the X-Forwarded-<attr> value
+		value := req.Header.Get("X-Forwarded-" + attr)
+		// Take the first comma-separated value, if multiple exist
+		value = strings.SplitN(value, ",", 2)[0]
+		// Trim whitespace
+		return strings.TrimSpace(value)
+	}
+
+	hasExplicitHost := func(h string) bool {
+		_, _, err := net.SplitHostPort(h)
+		return err == nil
+	}
+
+	forwardedHost := forwarded("Host")
+	host := ""
+	hostHadExplicitPort := false
+	switch {
+	case len(forwardedHost) > 0:
+		host = forwardedHost
+		hostHadExplicitPort = hasExplicitHost(host)
+
+		// If both X-Forwarded-Host and X-Forwarded-Port are sent, use the explicit port info
+		if forwardedPort := forwarded("Port"); len(forwardedPort) > 0 {
+			if h, _, err := net.SplitHostPort(forwardedHost); err == nil {
+				host = net.JoinHostPort(h, forwardedPort)
+			} else {
+				host = net.JoinHostPort(forwardedHost, forwardedPort)
+			}
+		}
+
+	case len(req.Host) > 0:
+		host = req.Host
+		hostHadExplicitPort = hasExplicitHost(host)
+
+	case len(req.URL.Host) > 0:
+		host = req.URL.Host
+		hostHadExplicitPort = hasExplicitHost(host)
+	}
+
+	port := ""
+	if _, p, err := net.SplitHostPort(host); err == nil {
+		port = p
+	}
+
+	forwardedProto := forwarded("Proto")
+	scheme := ""
+	switch {
+	case len(forwardedProto) > 0:
+		scheme = forwardedProto
+	case req.TLS != nil:
+		scheme = "https"
+	case len(req.URL.Scheme) > 0:
+		scheme = req.URL.Scheme
+	case port == "443":
+		scheme = "https"
+	default:
+		scheme = "http"
+	}
+
+	if !hostHadExplicitPort {
+		if (scheme == "https" && port == "443") || (scheme == "http" && port == "80") {
+			if hostWithoutPort, _, err := net.SplitHostPort(host); err == nil {
+				host = hostWithoutPort
+			}
+		}
+	}
+
+	return scheme, host
+}
+
+// errMessageString is a part of error message copied from quotaAdmission.Admit() method in
+// k8s.io/kubernetes/plugin/pkg/admission/resourcequota/admission.go module
+const errQuotaMessageString = `exceeded quota:`
+const errQuotaUnknownMessageString = `status unknown for quota:`
+const errLimitsMessageString = `exceeds the maximum limit`
+
+// IsErrorQuotaExceeded returns true if the given error stands for a denied request caused by detected quota
+// abuse.
+func IsErrorQuotaExceeded(err error) bool {
+	if isForbidden := apierrs.IsForbidden(err); isForbidden || apierrs.IsInvalid(err) {
+		lowered := strings.ToLower(err.Error())
+		// the limit error message can be accompanied only by Invalid reason
+		if strings.Contains(lowered, errLimitsMessageString) {
+			return true
+		}
+		// the quota error message can be accompanied only by Forbidden reason
+		if isForbidden && (strings.Contains(lowered, errQuotaMessageString) || strings.Contains(lowered, errQuotaUnknownMessageString)) {
+			return true
+		}
+	}
+	return false
+}
+
+// ParseDockerImageReference parses a Docker pull spec string into a
+// DockerImageReference.
+func ParseDockerImageReference(spec string) (DockerImageReference, error) {
+	var ref DockerImageReference
+
+	namedRef, err := parseNamedDockerImageReference(spec)
+	if err != nil {
+		return ref, err
+	}
+
+	ref.Registry = namedRef.Registry
+	ref.Namespace = namedRef.Namespace
+	ref.Name = namedRef.Name
+	ref.Tag = namedRef.Tag
+	ref.ID = namedRef.ID
+
+	return ref, nil
+}
+
+// NamedDockerImageReference points to a Docker image.
+type namedDockerImageReference struct {
+	Registry  string
+	Namespace string
+	Name      string
+	Tag       string
+	ID        string
+}
+
+// parseNamedDockerImageReference parses a Docker pull spec string into a
+// NamedDockerImageReference.
+func parseNamedDockerImageReference(spec string) (namedDockerImageReference, error) {
+	var ref namedDockerImageReference
+
+	namedRef, err := reference.ParseNamed(spec)
+	if err != nil {
+		return ref, err
+	}
+
+	name := namedRef.Name()
+	i := strings.IndexRune(name, '/')
+	if i == -1 || (!strings.ContainsAny(name[:i], ":.") && name[:i] != "localhost") {
+		ref.Name = name
+	} else {
+		ref.Registry, ref.Name = name[:i], name[i+1:]
+	}
+
+	if named, ok := namedRef.(reference.NamedTagged); ok {
+		ref.Tag = named.Tag()
+	}
+
+	if named, ok := namedRef.(reference.Canonical); ok {
+		ref.ID = named.Digest().String()
+	}
+
+	// It's not enough just to use the reference.ParseNamed(). We have to fill
+	// ref.Namespace from ref.Name
+	if i := strings.IndexRune(ref.Name, '/'); i != -1 {
+		ref.Namespace, ref.Name = ref.Name[:i], ref.Name[i+1:]
+	}
+
+	return ref, nil
+}
+
+// JoinImageStreamImage creates a name for image stream image object from an image stream name and an id.
+func JoinImageStreamImage(name, id string) string {
+	return fmt.Sprintf("%s@%s", name, id)
+}
+
+// SplitImageStreamTag turns the name of an ImageStreamTag into Name and Tag.
+// It returns false if the tag was not properly specified in the name.
+func SplitImageStreamTag(nameAndTag string) (name string, tag string, ok bool) {
+	parts := strings.SplitN(nameAndTag, ":", 2)
+	name = parts[0]
+	if len(parts) > 1 {
+		tag = parts[1]
+	}
+	if len(tag) == 0 {
+		tag = DefaultImageTag
+	}
+	return name, tag, len(parts) == 2
 }

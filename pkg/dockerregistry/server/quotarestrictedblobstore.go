@@ -16,8 +16,8 @@ import (
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/context"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kapi "k8s.io/kubernetes/pkg/api"
 
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
@@ -119,11 +119,11 @@ func (bw *quotaRestrictedBlobWriter) Commit(ctx context.Context, provisional dis
 }
 
 // getLimitRangeList returns list of limit ranges for repo.
-func getLimitRangeList(ctx context.Context, limitClient client.LimitRangesGetter, namespace string, quotaEnforcing *quotaEnforcingConfig) (*kapi.LimitRangeList, error) {
+func getLimitRangeList(ctx context.Context, limitClient client.LimitRangesGetter, namespace string, quotaEnforcing *quotaEnforcingConfig) (*corev1.LimitRangeList, error) {
 	if quotaEnforcing.limitRanges != nil {
 		obj, exists, _ := quotaEnforcing.limitRanges.get(namespace)
 		if exists {
-			return obj.(*kapi.LimitRangeList), nil
+			return obj.(*corev1.LimitRangeList), nil
 		}
 	}
 

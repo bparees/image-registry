@@ -8,8 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 type tagService struct {
@@ -177,7 +176,7 @@ func (t tagService) Tag(ctx context.Context, tag string, dgst distribution.Descr
 	}
 
 	_, err = t.repo.registryOSClient.ImageStreamMappings(imageStream.Namespace).Create(&ism)
-	if quotautil.IsErrorQuotaExceeded(err) {
+	if util.IsErrorQuotaExceeded(err) {
 		context.GetLogger(ctx).Errorf("denied creating ImageStreamMapping: %v", err)
 		return distribution.ErrAccessDenied
 	}
@@ -213,5 +212,5 @@ func (t tagService) Untag(ctx context.Context, tag string) error {
 		}
 	}
 
-	return t.repo.registryOSClient.ImageStreamTags(imageStream.Namespace).Delete(imageapi.JoinImageStreamTag(imageStream.Name, tag), &metav1.DeleteOptions{})
+	return t.repo.registryOSClient.ImageStreamTags(imageStream.Namespace).Delete(util.JoinImageStreamTag(imageStream.Name, tag), &metav1.DeleteOptions{})
 }

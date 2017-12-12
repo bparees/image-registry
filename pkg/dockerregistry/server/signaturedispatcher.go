@@ -19,7 +19,7 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 
 	gorillahandlers "github.com/gorilla/handlers"
 )
@@ -62,7 +62,7 @@ var (
 
 type signatureHandler struct {
 	ctx           *handlers.Context
-	reference     imageapi.DockerImageReference
+	reference     imageapiv1.DockerImageReference
 	isImageClient client.ImageStreamImagesNamespacer
 }
 
@@ -70,7 +70,7 @@ type signatureHandler struct {
 // requests for signature endpoint.
 func NewSignatureDispatcher(isImageClient client.ImageStreamImagesNamespacer) func(*handlers.Context, *http.Request) http.Handler {
 	return func(ctx *handlers.Context, r *http.Request) http.Handler {
-		reference, _ := imageapi.ParseDockerImageReference(
+		reference, _ := util.ParseDockerImageReference(
 			ctxu.GetStringValue(ctx, "vars.name") + "@" + ctxu.GetStringValue(ctx, "vars.digest"),
 		)
 		signatureHandler := &signatureHandler{
@@ -110,7 +110,7 @@ func (s *signatureHandler) Put(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(sig.Type) == 0 {
-		sig.Type = imageapi.ImageSignatureTypeAtomicImageV1
+		sig.Type = util.ImageSignatureTypeAtomicImageV1
 	}
 	if sig.Version != defaultSchemaVersion {
 		s.handleError(s.ctx, ErrorCodeSignatureInvalid.WithDetail(errors.New("only schemaVersion=2 is currently supported")), w)
@@ -158,7 +158,7 @@ func (s *signatureHandler) Get(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	image, err := s.isImageClient.ImageStreamImages(s.reference.Namespace).Get(imageapi.JoinImageStreamImage(s.reference.Name, s.reference.ID), metav1.GetOptions{})
+	image, err := s.isImageClient.ImageStreamImages(s.reference.Namespace).Get(util.JoinImageStreamImage(s.reference.Name, s.reference.ID), metav1.GetOptions{})
 	switch {
 	case err == nil:
 	case kapierrors.IsUnauthorized(err):

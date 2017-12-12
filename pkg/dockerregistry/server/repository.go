@@ -20,8 +20,7 @@ import (
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/audit"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/metrics"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 var (
@@ -240,7 +239,7 @@ func (r *repository) createImageStream(ctx context.Context) (*imageapiv1.ImageSt
 	case kerrors.IsAlreadyExists(err), kerrors.IsConflict(err):
 		context.GetLogger(ctx).Infof("conflict while creating ImageStream: %v", err)
 		return r.imageStreamGetter.get()
-	case kerrors.IsForbidden(err), kerrors.IsUnauthorized(err), quotautil.IsErrorQuotaExceeded(err):
+	case kerrors.IsForbidden(err), kerrors.IsUnauthorized(err), util.IsErrorQuotaExceeded(err):
 		context.GetLogger(ctx).Errorf("denied creating ImageStream: %v", err)
 		return nil, errcode.ErrorCodeDenied.WithDetail(err)
 	case err != nil:
@@ -340,7 +339,7 @@ func (r *repository) rememberLayersOfImage(image *imageapiv1.Image, cacheName st
 		for _, layer := range image.DockerImageLayers {
 			r.cachedLayers.RememberDigest(digest.Digest(layer.Name), r.config.blobRepositoryCacheTTL, cacheName)
 		}
-		meta, ok := image.DockerImageMetadata.Object.(*imageapi.DockerImage)
+		meta, ok := image.DockerImageMetadata.Object.(*imageapiv1.DockerImage)
 		if !ok {
 			context.GetLogger(r.ctx).Errorf("image does not have metadata %s", image.Name)
 			return

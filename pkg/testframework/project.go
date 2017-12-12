@@ -1,14 +1,14 @@
 package testframework
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
-	kapi "k8s.io/kubernetes/pkg/api/v1"
 
+	authorizationapiv1 "github.com/openshift/api/authorization/v1"
+	projectapiv1 "github.com/openshift/api/project/v1"
 	authorizationv1 "github.com/openshift/client-go/authorization/clientset/versioned/typed/authorization/v1"
 	projectv1 "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
-	authorizationapiv1 "github.com/openshift/origin/pkg/authorization/apis/authorization/v1"
-	projectapiv1 "github.com/openshift/origin/pkg/project/apis/project/v1"
 )
 
 func CreateProject(clientConfig *rest.Config, namespace string, adminUser string) (*projectapiv1.Project, error) {
@@ -28,7 +28,7 @@ func CreateProject(clientConfig *rest.Config, namespace string, adminUser string
 			Name: "admin",
 		},
 		UserNames: []string{adminUser},
-		RoleRef: kapi.ObjectReference{
+		RoleRef: corev1.ObjectReference{
 			Name: "admin",
 		},
 	})

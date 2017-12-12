@@ -16,13 +16,12 @@ import (
 	"github.com/docker/distribution/registry/client/auth"
 	"github.com/docker/libtrust"
 
+	kruntime "k8s.io/apimachiner/pkg/runtime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/diff"
-	kapi "k8s.io/kubernetes/pkg/api"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/origin-common/util"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
 
 	// install image API for k8s.io/kubernetes/pkg/api.Scheme.Converter
 	_ "github.com/openshift/origin/pkg/image/apis/image/install"
@@ -120,7 +119,7 @@ func MakeRandomLayer() ([]byte, distribution.Descriptor, error) {
 }
 
 func MakeManifestConfig() (ConfigPayload, distribution.Descriptor, error) {
-	cfg := imageapi.DockerImageConfig{}
+	cfg := imageapiv1.DockerImageConfig{}
 	cfgDesc := distribution.Descriptor{}
 
 	jsonBytes, err := json.Marshal(&cfg)
@@ -275,10 +274,10 @@ func NewImageForManifest(repoName string, rawManifest string, manifestConfig str
 
 	annotations := make(map[string]string)
 	if managedByOpenShift {
-		annotations[imageapi.ManagedByOpenShiftAnnotation] = "true"
+		annotations[util.ManagedByOpenShiftAnnotation] = "true"
 	}
 
-	img := imageapi.Image{
+	img := imageapiv1.Image{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        desc.Digest.String(),
 			Annotations: annotations,
@@ -291,7 +290,7 @@ func NewImageForManifest(repoName string, rawManifest string, manifestConfig str
 		return nil, err
 	}
 	newImage := imageapiv1.Image{}
-	if err := kapi.Scheme.Converter().Convert(&img, &newImage, 0, nil); err != nil {
+	if err := kruntime.Scheme.Converter().Convert(&img, &newImage, 0, nil); err != nil {
 		return nil, err
 	}
 

@@ -17,8 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 // ErrManifestBlobBadSize is returned when the blob size in a manifest does
@@ -65,7 +64,7 @@ func (m *manifestService) Get(ctx context.Context, dgst digest.Digest, options .
 		return nil, err
 	}
 
-	ref := imageapi.DockerImageReference{
+	ref := imageapiv1.DockerImageReference{
 		Namespace: m.repo.namespace,
 		Name:      m.repo.name,
 		Registry:  m.repo.config.registryAddr,
@@ -163,9 +162,9 @@ func (m *manifestService) Put(ctx context.Context, manifest distribution.Manifes
 			ObjectMeta: metav1.ObjectMeta{
 				Name: dgst.String(),
 				Annotations: map[string]string{
-					imageapi.ManagedByOpenShiftAnnotation:      "true",
-					imageapi.ImageManifestBlobStoredAnnotation: "true",
-					imageapi.DockerImageLayersOrderAnnotation:  layerOrder,
+					imageapiv1.ManagedByOpenShiftAnnotation:      "true",
+					imageapiv1.ImageManifestBlobStoredAnnotation: "true",
+					imageapiv1.DockerImageLayersOrderAnnotation:  layerOrder,
 				},
 			},
 			DockerImageReference:         fmt.Sprintf("%s/%s/%s@%s", m.repo.config.registryAddr, m.repo.namespace, m.repo.name, dgst.String()),
@@ -191,7 +190,7 @@ func (m *manifestService) Put(ctx context.Context, manifest distribution.Manifes
 			return "", err
 		}
 
-		if quotautil.IsErrorQuotaExceeded(statusErr) {
+		if util.IsErrorQuotaExceeded(statusErr) {
 			context.GetLogger(ctx).Errorf("denied creating ImageStreamMapping: %v", statusErr)
 			return "", distribution.ErrAccessDenied
 		}
@@ -214,7 +213,7 @@ func (m *manifestService) Put(ctx context.Context, manifest distribution.Manifes
 
 		// try to create the ISM again
 		if _, err := m.repo.registryOSClient.ImageStreamMappings(m.repo.namespace).Create(&ism); err != nil {
-			if quotautil.IsErrorQuotaExceeded(err) {
+			if util.IsErrorQuotaExceeded(err) {
 				context.GetLogger(ctx).Errorf("denied a creation of ImageStreamMapping: %v", err)
 				return "", distribution.ErrAccessDenied
 			}
@@ -270,14 +269,14 @@ func (m *manifestService) storeManifestLocally(ctx context.Context, image *image
 		}
 	}
 
-	if len(image.DockerImageManifest) == 0 || image.Annotations[imageapi.ImageManifestBlobStoredAnnotation] == "true" {
+	if len(image.DockerImageManifest) == 0 || image.Annotations[imageapiv1.ImageManifestBlobStoredAnnotation] == "true" {
 		return
 	}
 
 	if image.Annotations == nil {
 		image.Annotations = make(map[string]string)
 	}
-	image.Annotations[imageapi.ImageManifestBlobStoredAnnotation] = "true"
+	image.Annotations[imageapiv1.ImageManifestBlobStoredAnnotation] = "true"
 
 	if _, err := m.repo.updateImage(image); err != nil {
 		context.GetLogger(ctx).Errorf("error updating Image: %v", err)

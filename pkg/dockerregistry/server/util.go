@@ -8,15 +8,14 @@ import (
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/registry/api/errcode"
 	disterrors "github.com/docker/distribution/registry/api/v2"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
 
+	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kapiv1 "k8s.io/kubernetes/pkg/api/v1"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 	"github.com/openshift/origin/pkg/image/importer"
 )
 
@@ -49,7 +48,7 @@ func effectiveCreateOptions(options []distribution.BlobCreateOption) (*distribut
 }
 
 func isImageManaged(image *imageapiv1.Image) bool {
-	managed, ok := image.ObjectMeta.Annotations[imageapi.ManagedByOpenShiftAnnotation]
+	managed, ok := image.ObjectMeta.Annotations[util.ManagedByOpenShiftAnnotation]
 	return ok && managed == "true"
 }
 
@@ -85,7 +84,7 @@ func getImportContext(
 	secrets, err := osClient.ImageStreamSecrets(namespace).Secrets(name, metav1.ListOptions{})
 	if err != nil {
 		context.GetLogger(ctx).Errorf("error getting secrets for repository %s/%s: %v", namespace, name, err)
-		secrets = &kapiv1.SecretList{}
+		secrets = &corev1.SecretList{}
 	}
 	credentials := importer.NewCredentialsForSecrets(secrets.Items)
 	return importer.NewContext(secureTransport, insecureTransport).WithCredentials(credentials)
@@ -111,7 +110,7 @@ func (g *cachedImageStreamGetter) get() (*imageapiv1.ImageStream, error) {
 		switch {
 		case kerrors.IsNotFound(err):
 			return nil, disterrors.ErrorCodeNameUnknown.WithDetail(err)
-		case kerrors.IsForbidden(err), kerrors.IsUnauthorized(err), quotautil.IsErrorQuotaExceeded(err):
+		case kerrors.IsForbidden(err), kerrors.IsUnauthorized(err), util.IsErrorQuotaExceeded(err):
 			return nil, errcode.ErrorCodeDenied.WithDetail(err)
 		default:
 			return nil, errcode.ErrorCodeUnknown.WithDetail(err)

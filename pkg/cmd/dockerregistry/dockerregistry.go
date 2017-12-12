@@ -38,7 +38,7 @@ import (
 	_ "github.com/docker/distribution/registry/storage/driver/s3-aws"
 	_ "github.com/docker/distribution/registry/storage/driver/swift"
 
-	kubeversion "k8s.io/kubernetes/pkg/version"
+	kubeversion "k8s.io/client-go/pkg/version"
 
 	"github.com/openshift/origin/pkg/version"
 

@@ -12,7 +12,7 @@ import (
 
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/testutil"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 func TestManifestServiceExists(t *testing.T) {
@@ -106,8 +106,8 @@ func TestManifestServiceGetDoesntChangeDockerImageReference(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if img.Annotations[imageapi.ImageManifestBlobStoredAnnotation] != "true" {
-		t.Errorf("missing %q annotation on image", imageapi.ImageManifestBlobStoredAnnotation)
+	if img.Annotations[util.ImageManifestBlobStoredAnnotation] != "true" {
+		t.Errorf("missing %q annotation on image", util.ImageManifestBlobStoredAnnotation)
 	}
 	if img.DockerImageManifest != img1Manifest {
 		t.Errorf("image doesn't migrated, img.DockerImageManifest: want %q, got %q", "", img.DockerImageManifest)

@@ -21,7 +21,7 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 	"github.com/openshift/origin/pkg/image/importer"
 )
 
@@ -50,7 +50,7 @@ func TestPullthroughServeBlob(t *testing.T) {
 
 	fos, imageClient := registrytest.NewFakeOpenShiftWithClient(backgroundCtx)
 	registrytest.AddImageStream(t, fos, namespace, name, map[string]string{
-		imageapi.InsecureRepositoryAnnotation: "true",
+		util.InsecureRepositoryAnnotation: "true",
 	})
 	registrytest.AddImage(t, fos, testImage, namespace, name, "latest")
 
@@ -373,7 +373,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 			blobDigest: digest.Digest(m1img.DockerImageLayers[0].Name),
 			fakeOpenShiftInit: func(fos *registrytest.FakeOpenShift) {
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "true",
+					util.InsecureRepositoryAnnotation: "true",
 				})
 				registrytest.AddImage(t, fos, m1img, namespace, repo1, "tag1")
 			},
@@ -387,7 +387,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 			blobDigest: digest.Digest(m1img.DockerImageLayers[0].Name),
 			fakeOpenShiftInit: func(fos *registrytest.FakeOpenShift) {
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "true",
+					util.InsecureRepositoryAnnotation: "true",
 				})
 				registrytest.AddImage(t, fos, m1img, namespace, repo1, "tag1")
 			},
@@ -402,7 +402,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 			blobDigest: digest.Digest(m1img.DockerImageLayers[0].Name),
 			fakeOpenShiftInit: func(fos *registrytest.FakeOpenShift) {
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "false",
+					util.InsecureRepositoryAnnotation: "false",
 				})
 				registrytest.AddImage(t, fos, m1img, namespace, repo1, "tag1")
 			},
@@ -415,7 +415,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 			blobDigest: digest.Digest(m1img.DockerImageLayers[0].Name),
 			fakeOpenShiftInit: func(fos *registrytest.FakeOpenShift) {
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "false",
+					util.InsecureRepositoryAnnotation: "false",
 				})
 				registrytest.AddImage(t, fos, m1img, namespace, repo1, "tag1")
 			},
@@ -430,7 +430,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 				registrytest.AddUntaggedImage(t, fos, m1img)
 				registrytest.AddUntaggedImage(t, fos, m2img)
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "false",
+					util.InsecureRepositoryAnnotation: "false",
 				})
 				registrytest.AddImageStreamTag(t, fos, m1img, namespace, repo1, &imageapiv1.TagReference{
 					Name:         "tag1",
@@ -453,7 +453,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 				registrytest.AddUntaggedImage(t, fos, m1img)
 				registrytest.AddUntaggedImage(t, fos, m2img)
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "false",
+					util.InsecureRepositoryAnnotation: "false",
 				})
 				registrytest.AddImageStreamTag(t, fos, m1img, namespace, repo1, &imageapiv1.TagReference{
 					Name:         "tag1",
@@ -477,7 +477,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 				registrytest.AddUntaggedImage(t, fos, m1img)
 				registrytest.AddUntaggedImage(t, fos, m2img)
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "false",
+					util.InsecureRepositoryAnnotation: "false",
 				})
 				registrytest.AddImageStreamTag(t, fos, m1img, namespace, repo1, &imageapiv1.TagReference{
 					Name: "tag1",
@@ -503,7 +503,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 				registrytest.AddUntaggedImage(t, fos, m2img)
 
 				m2docker := *m2img
-				ref, err := imageapi.ParseDockerImageReference(m2img.DockerImageReference)
+				ref, err := util.ParseDockerImageReference(m2img.DockerImageReference)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -513,7 +513,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 				m2docker.DockerImageReference = ref.DockerClientDefaults().Exact()
 
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "false",
+					util.InsecureRepositoryAnnotation: "false",
 				})
 				registrytest.AddImageStreamTag(t, fos, m1img, namespace, repo1, &imageapiv1.TagReference{
 					Name:         "tag1",
@@ -534,7 +534,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 			fakeOpenShiftInit: func(fos *registrytest.FakeOpenShift) {
 				registrytest.AddUntaggedImage(t, fos, m1img)
 				registrytest.AddImageStream(t, fos, namespace, repo1, map[string]string{
-					imageapi.InsecureRepositoryAnnotation: "false",
+					util.InsecureRepositoryAnnotation: "false",
 				})
 				registrytest.AddImageStreamTag(t, fos, m1img, namespace, repo1, &imageapiv1.TagReference{
 					Name:         "tag1",
