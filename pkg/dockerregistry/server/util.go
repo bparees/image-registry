@@ -15,8 +15,8 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
+	"github.com/openshift/image-registry/pkg/origin-common/image/importer"
 	"github.com/openshift/image-registry/pkg/origin-common/util"
-	"github.com/openshift/origin/pkg/image/importer"
 )
 
 func getNamespaceName(resourceName string) (string, string, error) {

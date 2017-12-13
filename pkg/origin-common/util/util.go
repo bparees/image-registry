@@ -333,3 +333,26 @@ func SplitImageStreamTag(nameAndTag string) (name string, tag string, ok bool) {
 	}
 	return name, tag, len(parts) == 2
 }
+
+func newLimitExceededError(limitType kapi.LimitType, resourceName kapi.ResourceName, requested, limit *resource.Quantity) error {
+	return fmt.Errorf("requested usage of %s exceeds the maximum limit per %s (%s > %s)", resourceName, limitType, requested.String(), limit.String())
+}
+
+// AdmitImage checks if the size is greater than the limit range.  Abstracted for reuse in the registry.
+func AdmitImage(size int64, limit kapi.LimitRangeItem) error {
+	if limit.Type != imageapi.LimitTypeImage {
+		return nil
+	}
+
+	limitQuantity, ok := limit.Max[kapi.ResourceStorage]
+	if !ok {
+		return nil
+	}
+
+	imageQuantity := resource.NewQuantity(size, resource.BinarySI)
+	if limitQuantity.Cmp(*imageQuantity) < 0 {
+		// image size is larger than the permitted limit range max size, image is forbidden
+		return newLimitExceededError(imageapi.LimitTypeImage, kapi.ResourceStorage, imageQuantity, &limitQuantity)
+	}
+	return nil
+}

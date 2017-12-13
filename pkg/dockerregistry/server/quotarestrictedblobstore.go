@@ -21,7 +21,7 @@ import (
 
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
-	imageadmission "github.com/openshift/origin/pkg/image/admission"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 // newQuotaEnforcingConfig creates caches for quota objects. The objects are stored with given eviction
@@ -160,7 +160,7 @@ func admitBlobWrite(ctx context.Context, repo *repository, size int64) error {
 	for _, limitrange := range lrs.Items {
 		context.GetLogger(ctx).Debugf("processing limit range %s/%s", limitrange.Namespace, limitrange.Name)
 		for _, limit := range limitrange.Spec.Limits {
-			if err := imageadmission.AdmitImage(size, limit); err != nil {
+			if err := util.AdmitImage(size, limit); err != nil {
 				context.GetLogger(ctx).Errorf("refusing to write blob exceeding limit range %s: %s", limitrange.Name, err.Error())
 				return distribution.ErrAccessDenied
 			}
