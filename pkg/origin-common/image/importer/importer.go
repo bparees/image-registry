@@ -26,7 +26,7 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/origin-common/image/importer/dockerv1client"
-	"github.com/openshift/image-regsitry/pkg/origin-common/util"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 // Add a dockerregistry.Client to the passed context with this key to support v1 Docker registry importing

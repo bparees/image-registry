@@ -1,7 +1,7 @@
 package client
 
 import (
-	coreclientv1 "k8s.io/client-go/typed/core/v1"
+	coreclientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
 )

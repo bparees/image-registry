@@ -5,7 +5,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	authclientv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
-	coreclientv1 "k8s.io/client-go/typed/core/v1"
+	coreclientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	userapiv1 "github.com/openshift/api/user/v1"

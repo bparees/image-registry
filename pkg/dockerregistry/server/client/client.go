@@ -2,8 +2,8 @@ package client
 
 import (
 	authclientv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
+	coreclientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	restclient "k8s.io/client-go/rest"
-	coreclientv1 "k8s.io/client-go/typed/core/v1"
 
 	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
 	userclientv1 "github.com/openshift/client-go/user/clientset/versioned/typed/user/v1"

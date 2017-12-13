@@ -22,9 +22,6 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/origin-common/util"
-
-	// install image API for k8s.io/kubernetes/pkg/api.Scheme.Converter
-	_ "github.com/openshift/origin/pkg/image/apis/image/install"
 )
 
 type ManifestSchemaVersion int
@@ -287,16 +284,7 @@ func NewImageForManifest(repoName string, rawManifest string, manifestConfig str
 		DockerImageConfig:    manifestConfig,
 	}
 	if err := util.ImageWithMetadata(&img); err != nil {
-		return nil, err
-	}
-	newImage := imageapiv1.Image{}
-	if err := kruntime.Scheme.Converter().Convert(&img, &newImage, 0, nil); err != nil {
-		return nil, err
-	}
-
-	if err := imageapiv1.ImageWithMetadata(&newImage); err != nil {
 		return nil, fmt.Errorf("failed to fill image with metadata: %v", err)
 	}
-
-	return &newImage, nil
+	return &img, nil
 }
