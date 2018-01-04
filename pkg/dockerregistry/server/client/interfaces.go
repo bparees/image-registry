@@ -7,11 +7,12 @@ import (
 	kcoreclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/internalversion"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	userapiv1 "github.com/openshift/origin/pkg/user/apis/user/v1"
+	userapiv1 "github.com/openshift/api/user/v1"
 	authapiv1 "k8s.io/kubernetes/pkg/apis/authorization/v1"
 
-	imageclientv1 "github.com/openshift/origin/pkg/image/generated/clientset/typed/image/v1"
-	userclientv1 "github.com/openshift/origin/pkg/user/generated/clientset/typed/user/v1"
+	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
+	userclientv1 "github.com/openshift/client-go/user/clientset/versioned/typed/user/v1"
+
 	authclientv1 "k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/authorization/v1"
 )
 
