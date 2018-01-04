@@ -14,8 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	authorizationapi "k8s.io/kubernetes/pkg/apis/authorization/v1"
 
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	"github.com/openshift/origin/pkg/util/httprequest"
+	imageapi "github.com/openshift/api/image/v1"
+	"github.com/openshift/image-registry/pkg/origin-common/util/httprequest"
 
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/audit"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
