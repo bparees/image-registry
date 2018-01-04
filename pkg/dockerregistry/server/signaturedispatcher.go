@@ -17,9 +17,10 @@ import (
 	"github.com/docker/distribution/registry/api/v2"
 	"github.com/docker/distribution/registry/handlers"
 
+	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 
 	gorillahandlers "github.com/gorilla/handlers"
 )
@@ -62,7 +63,7 @@ var (
 
 type signatureHandler struct {
 	ctx           *handlers.Context
-	reference     imageapi.DockerImageReference
+	reference     imageapiv1.DockerImageReference
 	isImageClient client.ImageStreamImagesNamespacer
 }
 
@@ -110,7 +111,7 @@ func (s *signatureHandler) Put(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(sig.Type) == 0 {
-		sig.Type = imageapi.ImageSignatureTypeAtomicImageV1
+		sig.Type = consts.ImageSignatureTypeAtomicImageV1
 	}
 	if sig.Version != defaultSchemaVersion {
 		s.handleError(s.ctx, ErrorCodeSignatureInvalid.WithDetail(errors.New("only schemaVersion=2 is currently supported")), w)

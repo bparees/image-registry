@@ -12,8 +12,9 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/libtrust"
 
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	imageapiv1 "github.com/openshift/api/image/v1"
+	//imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
 )
 
 func unmarshalManifestSchema1(content []byte, signatures [][]byte) (distribution.Manifest, error) {
@@ -98,7 +99,7 @@ func (h *manifestSchema1Handler) Layers(ctx context.Context) (string, []imageapi
 		layers[revidx].LayerSize = desc.Size
 		layers[revidx].MediaType = schema1.MediaTypeManifestLayer
 	}
-	return imageapi.DockerImageLayersOrderAscending, layers, nil
+	return consts.DockerImageLayersOrderAscending, layers, nil
 }
 
 func (h *manifestSchema1Handler) Payload() (mediaType string, payload []byte, canonical []byte, err error) {

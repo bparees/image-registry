@@ -14,9 +14,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kapiv1 "k8s.io/kubernetes/pkg/api/v1"
 
+	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
 	"github.com/openshift/origin/pkg/image/importer"
 )
 
@@ -37,7 +37,7 @@ func getNamespaceName(resourceName string) (string, string, error) {
 }
 
 func isImageManaged(image *imageapiv1.Image) bool {
-	managed, ok := image.ObjectMeta.Annotations[imageapi.ManagedByOpenShiftAnnotation]
+	managed, ok := image.ObjectMeta.Annotations[consts.ManagedByOpenShiftAnnotation]
 	return ok && managed == "true"
 }
 

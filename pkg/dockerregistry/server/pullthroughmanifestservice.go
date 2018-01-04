@@ -5,8 +5,8 @@ import (
 	"github.com/docker/distribution/context"
 	"github.com/docker/distribution/digest"
 
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	imageapiv1 "github.com/openshift/api/image/v1"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 )
 
 // pullthroughManifestService wraps a distribution.ManifestService
@@ -76,7 +76,7 @@ func (m *pullthroughManifestService) remoteGet(ctx context.Context, dgst digest.
 	return manifest, err
 }
 
-func (m *pullthroughManifestService) getRemoteRepositoryClient(ctx context.Context, ref *imageapi.DockerImageReference, dgst digest.Digest, options ...distribution.ManifestServiceOption) (distribution.Repository, error) {
+func (m *pullthroughManifestService) getRemoteRepositoryClient(ctx context.Context, ref *imageapiv1.DockerImageReference, dgst digest.Digest, options ...distribution.ManifestServiceOption) (distribution.Repository, error) {
 	retriever := getImportContext(ctx, m.repo.registryOSClient, m.repo.namespace, m.repo.name)
 
 	// determine, whether to fall-back to insecure transport based on a specification of image's tag

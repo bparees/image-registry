@@ -18,8 +18,8 @@ import (
 		"github.com/blang/semver"
 		"github.com/golang/glog"
 	*/
+	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/origin-common/image/apis/image/internal/digest"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
 )
 
 /*
@@ -146,6 +146,7 @@ func IsRegistryDockerHub(registry string) bool {
 		return false
 	}
 }
+*/
 
 // ParseDockerImageReference parses a Docker pull spec string into a
 // DockerImageReference.
@@ -166,6 +167,7 @@ func ParseDockerImageReference(spec string) (DockerImageReference, error) {
 	return ref, nil
 }
 
+/*
 // Equal returns true if the other DockerImageReference is equivalent to the
 // reference r. The comparison applies defaults to the Docker image reference,
 // so that e.g., "foobar" equals "docker.io/library/foobar:latest".
@@ -356,12 +358,14 @@ func JoinImageStreamTag(name, tag string) string {
 	}
 	return fmt.Sprintf("%s:%s", name, tag)
 }
+*/
 
 // JoinImageStreamImage creates a name for image stream image object from an image stream name and an id.
 func JoinImageStreamImage(name, id string) string {
 	return fmt.Sprintf("%s@%s", name, id)
 }
 
+/*
 // NormalizeImageStreamTag normalizes an image stream tag by defaulting to 'latest'
 // if no tag has been specified.
 func NormalizeImageStreamTag(name string) string {

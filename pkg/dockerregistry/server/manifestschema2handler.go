@@ -11,8 +11,8 @@ import (
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/manifest/schema2"
 
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	imageapiv1 "github.com/openshift/api/image/v1"
+	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
 )
 
 var (
@@ -75,7 +75,7 @@ func (h *manifestSchema2Handler) Layers(ctx context.Context) (string, []imageapi
 		layers[i].LayerSize = layer.Size
 		layers[i].MediaType = layer.MediaType
 	}
-	return imageapi.DockerImageLayersOrderAscending, layers, nil
+	return consts.DockerImageLayersOrderAscending, layers, nil
 }
 
 func (h *manifestSchema2Handler) Payload() (mediaType string, payload []byte, canonical []byte, err error) {

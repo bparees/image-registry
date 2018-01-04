@@ -10,10 +10,11 @@ import (
 	"github.com/docker/distribution/registry/api/errcode"
 	disterrors "github.com/docker/distribution/registry/api/v2"
 
+	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/cache"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 	"github.com/openshift/origin/pkg/image/importer"
 )
 
@@ -60,7 +61,7 @@ func NewBlobGetterService(
 // imagePullthroughSpec contains a reference of remote image to pull associated with an insecure flag for the
 // corresponding registry.
 type imagePullthroughSpec struct {
-	dockerImageReference *imageapi.DockerImageReference
+	dockerImageReference *imageapiv1.DockerImageReference
 	insecure             bool
 }
 
@@ -289,7 +290,7 @@ func identifyCandidateRepositories(
 	primary bool,
 ) ([]string, map[string]imagePullthroughSpec) {
 	insecureByDefault := false
-	if insecure, ok := is.Annotations[imageapi.InsecureRepositoryAnnotation]; ok {
+	if insecure, ok := is.Annotations[consts.InsecureRepositoryAnnotation]; ok {
 		insecureByDefault = insecure == "true"
 	}
 
@@ -297,7 +298,7 @@ func identifyCandidateRepositories(
 	insecureRegistries := make(map[string]bool)
 
 	// identify the canonical location of referenced registries to search
-	search := make(map[string]*imageapi.DockerImageReference)
+	search := make(map[string]*imageapiv1.DockerImageReference)
 	for _, tagEvent := range is.Status.Tags {
 		tag := tagEvent.Tag
 		var candidates []imageapiv1.TagEvent
@@ -367,7 +368,7 @@ func pullInsecureByDefault(isGetter ImageStreamGetter, tag string) bool {
 		return insecureByDefault
 	}
 
-	if insecure, ok := is.Annotations[imageapi.InsecureRepositoryAnnotation]; ok {
+	if insecure, ok := is.Annotations[consts.InsecureRepositoryAnnotation]; ok {
 		insecureByDefault = insecure == "true"
 	}
 

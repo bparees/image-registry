@@ -16,8 +16,9 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageapiv1 "github.com/openshift/origin/pkg/image/apis/image/v1"
+	imageapiv1 "github.com/openshift/api/image/v1"
+	//imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
 	quotautil "github.com/openshift/origin/pkg/quota/util"
 )
 
@@ -65,7 +66,7 @@ func (m *manifestService) Get(ctx context.Context, dgst digest.Digest, options .
 		return nil, err
 	}
 
-	ref := imageapi.DockerImageReference{
+	ref := imageapiv1.DockerImageReference{
 		Namespace: m.repo.namespace,
 		Name:      m.repo.name,
 		Registry:  m.repo.app.config.Server.Addr,
@@ -164,9 +165,9 @@ func (m *manifestService) Put(ctx context.Context, manifest distribution.Manifes
 			ObjectMeta: metav1.ObjectMeta{
 				Name: dgst.String(),
 				Annotations: map[string]string{
-					imageapi.ManagedByOpenShiftAnnotation:      "true",
-					imageapi.ImageManifestBlobStoredAnnotation: "true",
-					imageapi.DockerImageLayersOrderAnnotation:  layerOrder,
+					consts.ManagedByOpenShiftAnnotation:      "true",
+					consts.ImageManifestBlobStoredAnnotation: "true",
+					consts.DockerImageLayersOrderAnnotation:  layerOrder,
 				},
 			},
 			DockerImageReference:         fmt.Sprintf("%s/%s/%s@%s", m.repo.app.config.Server.Addr, m.repo.namespace, m.repo.name, dgst.String()),
@@ -271,14 +272,14 @@ func (m *manifestService) storeManifestLocally(ctx context.Context, image *image
 		}
 	}
 
-	if len(image.DockerImageManifest) == 0 || image.Annotations[imageapi.ImageManifestBlobStoredAnnotation] == "true" {
+	if len(image.DockerImageManifest) == 0 || image.Annotations[consts.ImageManifestBlobStoredAnnotation] == "true" {
 		return
 	}
 
 	if image.Annotations == nil {
 		image.Annotations = make(map[string]string)
 	}
-	image.Annotations[imageapi.ImageManifestBlobStoredAnnotation] = "true"
+	image.Annotations[consts.ImageManifestBlobStoredAnnotation] = "true"
 
 	if _, err := m.repo.updateImage(image); err != nil {
 		context.GetLogger(ctx).Errorf("error updating Image: %v", err)
