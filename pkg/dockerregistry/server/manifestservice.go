@@ -19,7 +19,7 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	//imageapi "github.com/openshift/origin/pkg/image/apis/image"
 	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
+	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 )
 
 // ErrManifestBlobBadSize is returned when the blob size in a manifest does

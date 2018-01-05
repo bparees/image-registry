@@ -22,7 +22,7 @@ import (
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/metrics"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
+	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 )
 
 var (

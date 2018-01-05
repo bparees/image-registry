@@ -15,7 +15,7 @@ import (
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
-	"github.com/openshift/origin/pkg/image/importer"
+	"github.com/openshift/image-registry/pkg/origin-common/image/importer"
 )
 
 // BlobGetterService combines the operations to access and read blobs.

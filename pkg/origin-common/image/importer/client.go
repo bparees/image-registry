@@ -22,14 +22,14 @@ import (
 	"github.com/docker/distribution/registry/client/auth"
 	"github.com/docker/distribution/registry/client/auth/challenge"
 	"github.com/docker/distribution/registry/client/transport"
-	godigest "github.com/opencontainers/go-digest"
+	//godigest "github.com/opencontainers/go-digest"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
 
 	"github.com/openshift/api/image/dockerpre012"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	dockerregistry "github.com/openshift/origin/pkg/image/importer/dockerv1client"
+	//	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	//dockerregistry "github.com/openshift/image-registry/pkg/origin-common/image/importer/dockerv1client"
 )
 
 // ErrNotV2Registry is returned when the server does not report itself as a V2 Docker registry
@@ -209,6 +209,7 @@ func (r *repositoryRetriever) ping(registry url.URL, insecure bool, transport ht
 	return nil, nil
 }
 
+/*
 func schema1ToImage(manifest *schema1.SignedManifest, d godigest.Digest) (*imageapi.Image, error) {
 	if len(manifest.History) == 0 {
 		return nil, fmt.Errorf("image has no v1Compatibility history and cannot be used")
@@ -287,6 +288,7 @@ func schema0ToImage(dockerImage *dockerregistry.Image) (*imageapi.Image, error) 
 	return image, nil
 }
 
+
 func unmarshalDockerImage(body []byte) (*imageapi.DockerImage, error) {
 	var image dockerpre012.DockerImage
 	if err := json.Unmarshal(body, &image); err != nil {
@@ -298,6 +300,7 @@ func unmarshalDockerImage(body []byte) (*imageapi.DockerImage, error) {
 	}
 	return dockerImage, nil
 }
+*/
 
 func isDockerError(err error, code errcode.ErrorCode) bool {
 	switch t := err.(type) {

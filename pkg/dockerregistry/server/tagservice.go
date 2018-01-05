@@ -9,7 +9,7 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
+	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 )
 
 type tagService struct {

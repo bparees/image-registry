@@ -16,26 +16,27 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
 	"github.com/docker/distribution/registry/api/v2"
-	godigest "github.com/opencontainers/go-digest"
+	//	godigest "github.com/opencontainers/go-digest"
 
 	kapierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/util/flowcontrol"
-
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	"github.com/openshift/origin/pkg/image/importer/dockerv1client"
-	"github.com/openshift/origin/pkg/image/util"
+	//	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	//"github.com/openshift/origin/pkg/image/importer/dockerv1client"
+	//"github.com/openshift/origin/pkg/image/util"
 )
 
 // Add a dockerregistry.Client to the passed context with this key to support v1 Docker registry importing
 const ContextKeyV1RegistryClient = "v1-registry-client"
 
+/*
 // Interface loads images into an image stream import request.
 type Interface interface {
 	Import(ctx gocontext.Context, isi *imageapi.ImageStreamImport, stream *imageapi.ImageStream) error
 }
+*/
 
 // RepositoryRetriever fetches a Docker distribution.Repository.
 type RepositoryRetriever interface {
@@ -44,6 +45,7 @@ type RepositoryRetriever interface {
 	Repository(ctx gocontext.Context, registry *url.URL, repoName string, insecure bool) (distribution.Repository, error)
 }
 
+/*
 // ImageStreamImport implements an import strategy for Docker images. It keeps a cache of images
 // per distinct auth context to reduce duplicate loads. This type is not thread safe.
 type ImageStreamImporter struct {
@@ -744,3 +746,4 @@ func setImageImportStatus(images *imageapi.ImageStreamImport, i int, tag string,
 func invalidStatus(position string, errs ...*field.Error) metav1.Status {
 	return kapierrors.NewInvalid(imageapi.LegacyKind(""), position, errs).ErrStatus
 }
+*/

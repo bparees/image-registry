@@ -8,7 +8,6 @@ import (
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/registry/api/errcode"
 	disterrors "github.com/docker/distribution/registry/api/v2"
-	quotautil "github.com/openshift/origin/pkg/quota/util"
 
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +16,8 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
-	"github.com/openshift/origin/pkg/image/importer"
+	"github.com/openshift/image-registry/pkg/origin-common/image/importer"
+	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 )
 
 func getNamespaceName(resourceName string) (string, string, error) {
