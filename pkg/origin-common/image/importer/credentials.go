@@ -10,7 +10,8 @@ import (
 	"github.com/docker/distribution/registry/client/auth"
 
 	kapiv1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/credentialprovider"
+	//"k8s.io/kubernetes/pkg/credentialprovider"
+	"github.com/openshift/image-registry/pkg/kubernetes-common/credentialprovider"
 )
 
 var (
