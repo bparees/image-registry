@@ -26,8 +26,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	//"k8s.io/kubernetes/pkg/api/legacyscheme"
-
-	"github.com/openshift/api/image/dockerpre012"
+	//"github.com/openshift/api/image/dockerpre012"
 	//	imageapi "github.com/openshift/origin/pkg/image/apis/image"
 	//dockerregistry "github.com/openshift/image-registry/pkg/origin-common/image/importer/dockerv1client"
 )
