@@ -63,7 +63,7 @@ var (
 
 type signatureHandler struct {
 	ctx           *handlers.Context
-	reference     imageapiv1.DockerImageReference
+	reference     imageapi.DockerImageReference
 	isImageClient client.ImageStreamImagesNamespacer
 }
 

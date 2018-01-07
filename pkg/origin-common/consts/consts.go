@@ -23,6 +23,9 @@ const (
 	// DockerImageLayersOrderAnnotation describes layers order in the docker image.
 	DockerImageLayersOrderAnnotation = "image.openshift.io/dockerLayersOrder"
 
+	// InsecureRepositoryAnnotation may be set true on an image stream to allow insecure access to pull content.
+	InsecureRepositoryAnnotation = "openshift.io/image.insecureRepository"
+
 	// The supported type of image signature.
 	ImageSignatureTypeAtomicImageV1 string = "AtomicImageV1"
 )

@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/metrics"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
+	util "github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 var (
@@ -264,7 +265,7 @@ func (r *repository) getImage(dgst digest.Digest) (*imageapiv1.Image, error) {
 	}
 
 	context.GetLogger(r.ctx).Infof("(*repository).getImage: got image %s", image.Name)
-	if err := imageapiv1.ImageWithMetadata(image); err != nil {
+	if err := util.ImageWithMetadata(image); err != nil {
 		return nil, err
 	}
 	r.cachedImages[dgst] = image
@@ -289,7 +290,7 @@ func (r *repository) getStoredImageOfImageStream(dgst digest.Digest) (*imageapiv
 		return nil, nil, nil, wrapKStatusErrorOnGetImage(r.name, dgst, err)
 	}
 
-	tagEvent, err := imageapiv1.ResolveImageID(stream, dgst.String())
+	tagEvent, err := util.ResolveImageID(stream, dgst.String())
 	if err != nil {
 		context.GetLogger(r.ctx).Errorf("failed to resolve image %s in ImageStream %s/%s: %v", dgst.String(), r.namespace, r.name, err)
 		return nil, nil, nil, wrapKStatusErrorOnGetImage(r.name, dgst, err)

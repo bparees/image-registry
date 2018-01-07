@@ -61,7 +61,7 @@ func NewBlobGetterService(
 // imagePullthroughSpec contains a reference of remote image to pull associated with an insecure flag for the
 // corresponding registry.
 type imagePullthroughSpec struct {
-	dockerImageReference *imageapiv1.DockerImageReference
+	dockerImageReference *imageapi.DockerImageReference
 	insecure             bool
 }
 
@@ -298,7 +298,7 @@ func identifyCandidateRepositories(
 	insecureRegistries := make(map[string]bool)
 
 	// identify the canonical location of referenced registries to search
-	search := make(map[string]*imageapiv1.DockerImageReference)
+	search := make(map[string]*imageapi.DockerImageReference)
 	for _, tagEvent := range is.Status.Tags {
 		tag := tagEvent.Tag
 		var candidates []imageapiv1.TagEvent

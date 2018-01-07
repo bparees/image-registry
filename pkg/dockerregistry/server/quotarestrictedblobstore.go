@@ -13,15 +13,19 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	//kapi "k8s.io/kubernetes/pkg/api"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
+	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
 )
 
 // newQuotaEnforcingConfig creates caches for quota objects. The objects are stored with given eviction
@@ -177,7 +181,7 @@ func admitBlobWrite(ctx context.Context, repo *repository, size int64) error {
 
 // admitImage checks if the size is greater than the limit range.
 func admitImage(size int64, limit corev1.LimitRangeItem) error {
-	if limit.Type != imageapi.LimitTypeImage {
+	if limit.Type != consts.LimitTypeImage {
 		return nil
 	}
 
@@ -189,7 +193,11 @@ func admitImage(size int64, limit corev1.LimitRangeItem) error {
 	imageQuantity := resource.NewQuantity(size, resource.BinarySI)
 	if limitQuantity.Cmp(*imageQuantity) < 0 {
 		// image size is larger than the permitted limit range max size, image is forbidden
-		return newLimitExceededError(imageapi.LimitTypeImage, corev1.ResourceStorage, imageQuantity, &limitQuantity)
+		return newLimitExceededError(consts.LimitTypeImage, corev1.ResourceStorage, imageQuantity, &limitQuantity)
 	}
 	return nil
+}
+
+func newLimitExceededError(limitType corev1.LimitType, resourceName corev1.ResourceName, requested, limit *resource.Quantity) error {
+	return fmt.Errorf("requested usage of %s exceeds the maximum limit per %s (%s > %s)", resourceName, limitType, requested.String(), limit.String())
 }

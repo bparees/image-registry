@@ -19,6 +19,7 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	//imageapi "github.com/openshift/origin/pkg/image/apis/image"
 	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 )
 
@@ -66,7 +67,7 @@ func (m *manifestService) Get(ctx context.Context, dgst digest.Digest, options .
 		return nil, err
 	}
 
-	ref := imageapiv1.DockerImageReference{
+	ref := imageapi.DockerImageReference{
 		Namespace: m.repo.namespace,
 		Name:      m.repo.name,
 		Registry:  m.repo.app.config.Server.Addr,

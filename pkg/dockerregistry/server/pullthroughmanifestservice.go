@@ -5,8 +5,9 @@ import (
 	"github.com/docker/distribution/context"
 	"github.com/docker/distribution/digest"
 
-	imageapiv1 "github.com/openshift/api/image/v1"
+	//imageapiv1 "github.com/openshift/api/image/v1"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
+	util "github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 // pullthroughManifestService wraps a distribution.ManifestService
@@ -76,7 +77,7 @@ func (m *pullthroughManifestService) remoteGet(ctx context.Context, dgst digest.
 	return manifest, err
 }
 
-func (m *pullthroughManifestService) getRemoteRepositoryClient(ctx context.Context, ref *imageapiv1.DockerImageReference, dgst digest.Digest, options ...distribution.ManifestServiceOption) (distribution.Repository, error) {
+func (m *pullthroughManifestService) getRemoteRepositoryClient(ctx context.Context, ref *imageapi.DockerImageReference, dgst digest.Digest, options ...distribution.ManifestServiceOption) (distribution.Repository, error) {
 	retriever := getImportContext(ctx, m.repo.registryOSClient, m.repo.namespace, m.repo.name)
 
 	// determine, whether to fall-back to insecure transport based on a specification of image's tag
@@ -94,7 +95,7 @@ func (m *pullthroughManifestService) getRemoteRepositoryClient(ctx context.Conte
 			return nil, err // this is impossible
 		}
 		// if the client pulled by digest, find the corresponding tag in the image stream
-		tag, _ = imageapiv1.LatestImageTagEvent(is, dgst.String())
+		tag, _ = util.LatestImageTagEvent(is, dgst.String())
 	}
 	insecure := pullInsecureByDefault(m.repo.imageStreamGetter.get, tag)
 

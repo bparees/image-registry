@@ -83,7 +83,7 @@ func (bs *blobDescriptorService) Stat(ctx context.Context, dgst digest.Digest) (
 // given repository. If not found locally, image stream's images will be iterated and fetched from newest to
 // oldest until found. Each processed image will update local cache of blobs.
 func imageStreamHasBlob(r *repository, dgst digest.Digest) bool {
-	repoCacheName := imageapiv1.DockerImageReference{Namespace: r.namespace, Name: r.name}.Exact()
+	repoCacheName := imageapi.DockerImageReference{Namespace: r.namespace, Name: r.name}.Exact()
 	if r.cache.ContainsRepository(dgst, repoCacheName) {
 		context.GetLogger(r.ctx).Debugf("found cached blob %q in repository %s", dgst.String(), r.Named().Name())
 		return true
