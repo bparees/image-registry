@@ -1,14 +1,15 @@
 package util
 
 import (
+	"encoding/json"
 	//"fmt"
 	//"strings"
 
 	//"k8s.io/apimachinery/pkg/api/errors"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
+	//runtime "k8s.io/apimachinery/pkg/runtime"
 	//"k8s.io/apimachinery/pkg/util/sets"
-	api "k8s.io/kubernetes/pkg/api"
+	//api "k8s.io/kubernetes/pkg/api"
 	//imageapi "github.com/openshift/origin/pkg/image/apis/image"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
@@ -31,9 +32,16 @@ func ImageWithMetadata(image *imageapiv1.Image) error {
 	}
 
 	obj := &imageapi.DockerImage{}
-	if err := runtime.DecodeInto(api.Codecs.UniversalDecoder(), image.DockerImageMetadata.Raw, obj); err != nil {
+	/*
+		if err := runtime.DecodeInto(api.Codecs.UniversalDecoder(), image.DockerImageMetadata.Raw, obj); err != nil {
+			return err
+		}
+	*/
+
+	if err := json.Unmarshal(image.DockerImageMetadata.Raw, obj); err != nil {
 		return err
 	}
+
 	image.DockerImageMetadata.Object = obj
 	image.DockerImageMetadataVersion = version
 	return nil

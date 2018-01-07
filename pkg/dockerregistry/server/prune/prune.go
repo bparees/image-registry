@@ -17,6 +17,7 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
+	util "github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 // Pruner defines a common set of operations for pruning
@@ -191,12 +192,12 @@ func Prune(ctx context.Context, registry distribution.Namespace, registryClient 
 		// Keep the manifest.
 		inuse[image.Name] = image.DockerImageReference
 
-		if err := imageapiv1.ImageWithMetadata(&image); err != nil {
+		if err := util.ImageWithMetadata(&image); err != nil {
 			return Summary{}, fmt.Errorf("error getting image metadata: %v", err)
 		}
 		// Keep the config for a schema 2 manifest.
 		if image.DockerImageManifestMediaType == schema2.MediaTypeManifest {
-			meta, ok := image.DockerImageMetadata.Object.(*imageapiv1.DockerImage)
+			meta, ok := image.DockerImageMetadata.Object.(*imageapi.DockerImage)
 			if ok {
 				inuse[meta.ID] = image.DockerImageReference
 			}
