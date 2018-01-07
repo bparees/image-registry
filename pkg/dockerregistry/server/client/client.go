@@ -36,14 +36,14 @@ type Interface interface {
 }
 
 type apiClient struct {
-	kube  coreclientv1.CoreInterface
+	kube  coreclientv1.CoreV1Interface
 	auth  authclientv1.AuthorizationV1Interface
 	image imageclientv1.ImageV1Interface
 	user  userclientv1.UserV1Interface
 }
 
 func newAPIClient(
-	kc coreclientv1.CoreInterface,
+	kc coreclientv1.CoreV1Interface,
 	authClient authclientv1.AuthorizationV1Interface,
 	imageClient imageclientv1.ImageV1Interface,
 	userClient userclientv1.UserV1Interface,

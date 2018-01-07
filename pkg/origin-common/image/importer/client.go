@@ -1,7 +1,7 @@
 package importer
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,8 +14,8 @@ import (
 
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/context"
-	"github.com/docker/distribution/manifest/schema1"
-	"github.com/docker/distribution/manifest/schema2"
+	//"github.com/docker/distribution/manifest/schema1"
+	//"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
 	registryclient "github.com/docker/distribution/registry/client"
@@ -23,8 +23,8 @@ import (
 	"github.com/docker/distribution/registry/client/auth/challenge"
 	"github.com/docker/distribution/registry/client/transport"
 	//godigest "github.com/opencontainers/go-digest"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/docker/distribution/digest"
+	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	//"k8s.io/kubernetes/pkg/api/legacyscheme"
 	//"github.com/openshift/api/image/dockerpre012"
 	//	imageapi "github.com/openshift/origin/pkg/image/apis/image"
@@ -415,7 +415,7 @@ type retryManifest struct {
 }
 
 // Exists returns true if the manifest exists.
-func (r retryManifest) Exists(ctx context.Context, dgst godigest.Digest) (bool, error) {
+func (r retryManifest) Exists(ctx context.Context, dgst digest.Digest) (bool, error) {
 	for {
 		if exists, err := r.ManifestService.Exists(ctx, dgst); r.repo.shouldRetry(err) {
 			continue
@@ -426,7 +426,7 @@ func (r retryManifest) Exists(ctx context.Context, dgst godigest.Digest) (bool, 
 }
 
 // Get retrieves the manifest identified by the digest, if it exists.
-func (r retryManifest) Get(ctx context.Context, dgst godigest.Digest, options ...distribution.ManifestServiceOption) (distribution.Manifest, error) {
+func (r retryManifest) Get(ctx context.Context, dgst digest.Digest, options ...distribution.ManifestServiceOption) (distribution.Manifest, error) {
 	for {
 		if m, err := r.ManifestService.Get(ctx, dgst, options...); r.repo.shouldRetry(err) {
 			continue
@@ -442,7 +442,7 @@ type retryBlobStore struct {
 	repo *retryRepository
 }
 
-func (r retryBlobStore) Stat(ctx context.Context, dgst godigest.Digest) (distribution.Descriptor, error) {
+func (r retryBlobStore) Stat(ctx context.Context, dgst digest.Digest) (distribution.Descriptor, error) {
 	for {
 		if d, err := r.BlobStore.Stat(ctx, dgst); r.repo.shouldRetry(err) {
 			continue
@@ -452,7 +452,7 @@ func (r retryBlobStore) Stat(ctx context.Context, dgst godigest.Digest) (distrib
 	}
 }
 
-func (r retryBlobStore) ServeBlob(ctx context.Context, w http.ResponseWriter, req *http.Request, dgst godigest.Digest) error {
+func (r retryBlobStore) ServeBlob(ctx context.Context, w http.ResponseWriter, req *http.Request, dgst digest.Digest) error {
 	for {
 		if err := r.BlobStore.ServeBlob(ctx, w, req, dgst); r.repo.shouldRetry(err) {
 			continue
@@ -462,7 +462,7 @@ func (r retryBlobStore) ServeBlob(ctx context.Context, w http.ResponseWriter, re
 	}
 }
 
-func (r retryBlobStore) Open(ctx context.Context, dgst godigest.Digest) (distribution.ReadSeekCloser, error) {
+func (r retryBlobStore) Open(ctx context.Context, dgst digest.Digest) (distribution.ReadSeekCloser, error) {
 	for {
 		if rsc, err := r.BlobStore.Open(ctx, dgst); r.repo.shouldRetry(err) {
 			continue

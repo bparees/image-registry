@@ -24,6 +24,6 @@ func (c *fakeRegistryClient) Client() (Interface, error) {
 	return newAPIClient(nil, nil, c.images, nil), nil
 }
 
-func NewFakeRegistryAPIClient(kc coreclientv1.CoreInterface, imageclient imageclientv1.ImageV1Interface) Interface {
+func NewFakeRegistryAPIClient(kc coreclientv1.CoreV1Interface, imageclient imageclientv1.ImageV1Interface) Interface {
 	return newAPIClient(nil, nil, imageclient, nil)
 }

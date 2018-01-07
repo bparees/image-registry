@@ -73,13 +73,13 @@ type ImageStreamImageInterface interface {
 	Get(name string, options metav1.GetOptions) (*imageapiv1.ImageStreamImage, error)
 }
 
-var _ UserInterface = userclientv1.UserResourceInterface(nil)
+var _ UserInterface = userclientv1.UserV1Interface(nil).Users()
 
 type UserInterface interface {
 	Get(name string, options metav1.GetOptions) (*userapiv1.User, error)
 }
 
-var _ ImageInterface = imageclientv1.ImageResourceInterface(nil)
+var _ ImageInterface = imageclientv1.ImageV1Interface(nil).Images()
 
 type ImageInterface interface {
 	Get(name string, options metav1.GetOptions) (*imageapiv1.Image, error)

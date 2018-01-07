@@ -4,7 +4,9 @@ import (
 	/*
 		"bytes"
 		"errors"
-		"fmt"
+	*/
+	"fmt"
+	/*
 		"net"
 		"net/url"
 		"regexp"
@@ -18,7 +20,7 @@ import (
 		"github.com/blang/semver"
 		"github.com/golang/glog"
 	*/
-	imageapiv1 "github.com/openshift/api/image/v1"
+	//	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/origin-common/image/apis/image/internal/digest"
 )
 
@@ -277,7 +279,7 @@ func (r DockerImageReference) MostSpecific() DockerImageReference {
 */
 
 // NameString returns the name of the reference with its tag or ID.
-func (r imageapiv1.DockerImageReference) NameString() string {
+func (r DockerImageReference) NameString() string {
 	switch {
 	case len(r.Name) == 0:
 		return ""
@@ -299,7 +301,7 @@ func (r imageapiv1.DockerImageReference) NameString() string {
 }
 
 // Exact returns a string representation of the set fields on the DockerImageReference
-func (r imageapiv1.DockerImageReference) Exact() string {
+func (r DockerImageReference) Exact() string {
 	name := r.NameString()
 	if len(name) == 0 {
 		return name
