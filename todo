@@ -1,0 +1,9 @@
+1) move consts back into imageapi copy
+2) create v1 versions of DockerImageReference helpers
+  - stop using internal DockerImageReference type
+3) What to do about use of internal DockerImage type
+  - origin-common/util/util.go:ImageWithMetadata()
+  - is it being unmarshalled properly?
+  - can we use the v1 DockerImage type instead? (should we?)
+    - need to add DeepCopyObject to it
+
