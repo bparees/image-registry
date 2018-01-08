@@ -25,7 +25,7 @@ import (
 
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
-	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 )
 
 // newQuotaEnforcingConfig creates caches for quota objects. The objects are stored with given eviction
@@ -181,7 +181,7 @@ func admitBlobWrite(ctx context.Context, repo *repository, size int64) error {
 
 // admitImage checks if the size is greater than the limit range.
 func admitImage(size int64, limit corev1.LimitRangeItem) error {
-	if limit.Type != consts.LimitTypeImage {
+	if limit.Type != imageapi.LimitTypeImage {
 		return nil
 	}
 
@@ -193,7 +193,7 @@ func admitImage(size int64, limit corev1.LimitRangeItem) error {
 	imageQuantity := resource.NewQuantity(size, resource.BinarySI)
 	if limitQuantity.Cmp(*imageQuantity) < 0 {
 		// image size is larger than the permitted limit range max size, image is forbidden
-		return newLimitExceededError(consts.LimitTypeImage, corev1.ResourceStorage, imageQuantity, &limitQuantity)
+		return newLimitExceededError(imageapi.LimitTypeImage, corev1.ResourceStorage, imageQuantity, &limitQuantity)
 	}
 	return nil
 }

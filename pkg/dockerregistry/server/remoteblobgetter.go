@@ -13,7 +13,6 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/cache"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 	"github.com/openshift/image-registry/pkg/origin-common/image/importer"
 )
@@ -290,7 +289,7 @@ func identifyCandidateRepositories(
 	primary bool,
 ) ([]string, map[string]imagePullthroughSpec) {
 	insecureByDefault := false
-	if insecure, ok := is.Annotations[consts.InsecureRepositoryAnnotation]; ok {
+	if insecure, ok := is.Annotations[imageapi.InsecureRepositoryAnnotation]; ok {
 		insecureByDefault = insecure == "true"
 	}
 
@@ -368,7 +367,7 @@ func pullInsecureByDefault(isGetter ImageStreamGetter, tag string) bool {
 		return insecureByDefault
 	}
 
-	if insecure, ok := is.Annotations[consts.InsecureRepositoryAnnotation]; ok {
+	if insecure, ok := is.Annotations[imageapi.InsecureRepositoryAnnotation]; ok {
 		insecureByDefault = insecure == "true"
 	}
 

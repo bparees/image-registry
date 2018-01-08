@@ -18,7 +18,7 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	//imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
+	//consts "github.com/openshift/image-registry/pkg/origin-common/consts"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 )
@@ -166,9 +166,9 @@ func (m *manifestService) Put(ctx context.Context, manifest distribution.Manifes
 			ObjectMeta: metav1.ObjectMeta{
 				Name: dgst.String(),
 				Annotations: map[string]string{
-					consts.ManagedByOpenShiftAnnotation:      "true",
-					consts.ImageManifestBlobStoredAnnotation: "true",
-					consts.DockerImageLayersOrderAnnotation:  layerOrder,
+					imageapi.ManagedByOpenShiftAnnotation:      "true",
+					imageapi.ImageManifestBlobStoredAnnotation: "true",
+					imageapi.DockerImageLayersOrderAnnotation:  layerOrder,
 				},
 			},
 			DockerImageReference:         fmt.Sprintf("%s/%s/%s@%s", m.repo.app.config.Server.Addr, m.repo.namespace, m.repo.name, dgst.String()),
@@ -273,14 +273,14 @@ func (m *manifestService) storeManifestLocally(ctx context.Context, image *image
 		}
 	}
 
-	if len(image.DockerImageManifest) == 0 || image.Annotations[consts.ImageManifestBlobStoredAnnotation] == "true" {
+	if len(image.DockerImageManifest) == 0 || image.Annotations[imageapi.ImageManifestBlobStoredAnnotation] == "true" {
 		return
 	}
 
 	if image.Annotations == nil {
 		image.Annotations = make(map[string]string)
 	}
-	image.Annotations[consts.ImageManifestBlobStoredAnnotation] = "true"
+	image.Annotations[imageapi.ImageManifestBlobStoredAnnotation] = "true"
 
 	if _, err := m.repo.updateImage(image); err != nil {
 		context.GetLogger(ctx).Errorf("error updating Image: %v", err)

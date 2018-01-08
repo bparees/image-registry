@@ -16,7 +16,7 @@ import (
 
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
-	consts "github.com/openshift/image-registry/pkg/origin-common/consts"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 	"github.com/openshift/image-registry/pkg/origin-common/image/importer"
 	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 )
@@ -38,7 +38,7 @@ func getNamespaceName(resourceName string) (string, string, error) {
 }
 
 func isImageManaged(image *imageapiv1.Image) bool {
-	managed, ok := image.ObjectMeta.Annotations[consts.ManagedByOpenShiftAnnotation]
+	managed, ok := image.ObjectMeta.Annotations[imageapi.ManagedByOpenShiftAnnotation]
 	return ok && managed == "true"
 }
 
