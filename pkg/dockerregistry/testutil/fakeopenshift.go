@@ -12,8 +12,9 @@ import (
 	clientgotesting "k8s.io/client-go/testing"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imagefakeclient "github.com/openshift/origin/pkg/image/generated/clientset/typed/image/v1/fake"
+	imagefakeclient "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1/fake"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
+	util "github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 // FakeOpenShift is an in-mempory reactors for fake.Client.
@@ -264,10 +265,10 @@ func (fos *FakeOpenShift) GetImageStreamImage(namespace string, id string) (*ima
 	}
 
 	if repo.Status.Tags == nil {
-		return nil, errors.NewNotFound(imageapi.Resource("imagestreamimage"), id)
+		return nil, errors.NewNotFound(imageapiv1.Resource("imagestreamimage"), id)
 	}
 
-	event, err := imageapiv1.ResolveImageID(repo, imageID)
+	event, err := util.ResolveImageID(repo, imageID)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +278,7 @@ func (fos *FakeOpenShift) GetImageStreamImage(namespace string, id string) (*ima
 	if err != nil {
 		return nil, err
 	}
-	if err := imageapiv1.ImageWithMetadata(image); err != nil {
+	if err := util.ImageWithMetadata(image); err != nil {
 		return nil, err
 	}
 	image.DockerImageManifest = ""

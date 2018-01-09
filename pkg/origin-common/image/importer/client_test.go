@@ -160,6 +160,7 @@ func TestSchema1ToImage(t *testing.T) {
 	}
 }
 
+/*
 func TestDockerV1Fallback(t *testing.T) {
 	var uri *url.URL
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -207,6 +208,7 @@ func TestDockerV1Fallback(t *testing.T) {
 		t.Errorf("unexpected images: %#v", images)
 	}
 }
+*/
 
 func TestPing(t *testing.T) {
 	retriever := NewContext(http.DefaultTransport, http.DefaultTransport).WithCredentials(NoCredentials).(*repositoryRetriever)

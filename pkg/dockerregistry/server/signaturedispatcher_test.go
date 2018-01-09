@@ -20,11 +20,11 @@ import (
 	clientgotesting "k8s.io/client-go/testing"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
+	imagefakeclient "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1/fake"
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	registryconfig "github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
 	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imagefakeclient "github.com/openshift/origin/pkg/image/generated/clientset/typed/image/v1/fake"
 )
 
 func TestSignatureGet(t *testing.T) {

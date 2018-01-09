@@ -104,6 +104,7 @@ func (r *defaultRegistryHostnameRetriever) InternalRegistryHostname() (string, b
 func (r *defaultRegistryHostnameRetriever) ExternalRegistryHostname() (string, bool) {
 	return r.externalHostname, len(r.externalHostname) > 0
 }
+*/
 
 // ParseImageStreamImageName splits a string into its name component and ID component, and returns an error
 // if the string is not in the right form.
@@ -122,6 +123,7 @@ func ParseImageStreamImageName(input string) (name string, id string, err error)
 	return
 }
 
+/*
 // ParseImageStreamTagName splits a string into its name component and tag component, and returns an error
 // if the string is not in the right form.
 func ParseImageStreamTagName(istag string) (name string, tag string, err error) {
@@ -339,8 +341,6 @@ func (r DockerImageReference) String() string {
 	return r.Exact()
 }
 
-/*
-
 // SplitImageStreamTag turns the name of an ImageStreamTag into Name and Tag.
 // It returns false if the tag was not properly specified in the name.
 func SplitImageStreamTag(nameAndTag string) (name string, tag string, ok bool) {
@@ -355,6 +355,7 @@ func SplitImageStreamTag(nameAndTag string) (name string, tag string, ok bool) {
 	return name, tag, len(parts) == 2
 }
 
+/*
 // SplitImageStreamImage turns the name of an ImageStreamImage into Name and ID.
 // It returns false if the ID was not properly specified in the name.
 func SplitImageStreamImage(nameAndID string) (name string, id string, ok bool) {
