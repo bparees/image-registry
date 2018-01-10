@@ -19,10 +19,10 @@ import (
 	_ "github.com/docker/distribution/registry/storage/driver/inmemory"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
+	dockerregistryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
-	"github.com/openshift/image-registry/pkg/origin-common/image/registryclient"
+	originregistryclient "github.com/openshift/image-registry/pkg/origin-common/image/registryclient"
 )
 
 func TestPullthroughServeBlob(t *testing.T) {
@@ -141,7 +141,7 @@ func TestPullthroughServeBlob(t *testing.T) {
 
 		ctx := WithTestPassthroughToUpstream(backgroundCtx, false)
 		repo := newTestRepository(ctx, t, namespace, name, testRepositoryOptions{
-			client:            registryclient.NewFakeRegistryAPIClient(nil, imageClient),
+			client:            dockerregistryclient.NewFakeRegistryAPIClient(nil, imageClient),
 			enablePullThrough: true,
 		})
 		ptbs := &pullthroughBlobStore{
@@ -253,7 +253,7 @@ func TestPullthroughServeNotSeekableBlob(t *testing.T) {
 	ctx := context.Background()
 	ctx = registrytest.WithTestLogger(ctx, t)
 
-	retriever := importer.NewContext(http.DefaultTransport, http.DefaultTransport).WithCredentials(importer.NoCredentials)
+	retriever := originregistryclient.NewContext(http.DefaultTransport, http.DefaultTransport).WithCredentials(originregistryclient.NoCredentials)
 	repo, err := retriever.Repository(ctx, externalRegistryURL, repoName, true)
 	if err != nil {
 		t.Fatal(err)
@@ -567,7 +567,7 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 			ctx = WithTestPassthroughToUpstream(ctx, false)
 
 			repo := newTestRepository(ctx, t, namespace, repo1, testRepositoryOptions{
-				client:            registryclient.NewFakeRegistryAPIClient(nil, imageClient),
+				client:            dockerregistryclient.NewFakeRegistryAPIClient(nil, imageClient),
 				enablePullThrough: true,
 			})
 
