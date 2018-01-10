@@ -10,8 +10,10 @@ import (
 
 	authorizationv1 "github.com/openshift/client-go/authorization/clientset/versioned/typed/authorization/v1"
 	projectv1 "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
-	authorizationapiv1 "github.com/openshift/origin/pkg/authorization/apis/authorization/v1"
-	projectapiv1 "github.com/openshift/origin/pkg/project/apis/project/v1"
+	//authorizationapiv1 "github.com/openshift/origin/pkg/authorization/apis/authorization/v1"
+	authorizationapiv1 "github.com/openshift/api/authorization/v1"
+	//projectapiv1 "github.com/openshift/origin/pkg/project/apis/project/v1"
+	projectapiv1 "github.com/openshift/api/project/v1"
 )
 
 func CreateProject(t *testing.T, clientConfig *rest.Config, namespace string, adminUser string) *projectapiv1.Project {
