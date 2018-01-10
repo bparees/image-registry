@@ -22,7 +22,7 @@ import (
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
-	"github.com/openshift/image-registry/pkg/origin-common/image/importer"
+	"github.com/openshift/image-registry/pkg/origin-common/image/registryclient"
 )
 
 func TestPullthroughServeBlob(t *testing.T) {

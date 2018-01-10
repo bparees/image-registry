@@ -17,7 +17,7 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
-	"github.com/openshift/image-registry/pkg/origin-common/image/importer"
+	"github.com/openshift/image-registry/pkg/origin-common/image/registryclient"
 	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 )
 
@@ -70,14 +70,14 @@ func getImportContext(
 	ctx context.Context,
 	osClient client.ImageStreamSecretsNamespacer,
 	namespace, name string,
-) importer.RepositoryRetriever {
+) registryclient.RepositoryRetriever {
 	secrets, err := osClient.ImageStreamSecrets(namespace).Secrets(name, metav1.ListOptions{})
 	if err != nil {
 		context.GetLogger(ctx).Errorf("error getting secrets for repository %s/%s: %v", namespace, name, err)
 		secrets = &corev1.SecretList{}
 	}
-	credentials := importer.NewCredentialsForSecrets(secrets.Items)
-	return importer.NewContext(secureTransport, insecureTransport).WithCredentials(credentials)
+	credentials := registryclient.NewCredentialsForSecrets(secrets.Items)
+	return registryclient.NewContext(secureTransport, insecureTransport).WithCredentials(credentials)
 }
 
 // cachedImageStreamGetter wraps a master API client for getting image streams with a cache.

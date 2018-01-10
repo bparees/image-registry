@@ -1,24 +1,31 @@
-package importer
+package registryclient
 
 import (
 	"net/url"
 	"strings"
 	"sync"
 
+	"github.com/docker/distribution/registry/client/auth"
 	"github.com/golang/glog"
 
-	"github.com/docker/distribution/registry/client/auth"
-
-	kapiv1 "k8s.io/api/core/v1"
 	//"k8s.io/kubernetes/pkg/credentialprovider"
 	"github.com/openshift/image-registry/pkg/kubernetes-common/credentialprovider"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 var (
 	NoCredentials auth.CredentialStore = &noopCredentialStore{}
-
-	emptyKeyring = &credentialprovider.BasicDockerKeyring{}
 )
+
+type RefreshTokenStore interface {
+	RefreshToken(url *url.URL, service string) string
+	SetRefreshToken(url *url.URL, service string, token string)
+}
+
+func NewRefreshTokenStore() RefreshTokenStore {
+	return &refreshTokenStore{}
+}
 
 type refreshTokenKey struct {
 	url     string
@@ -48,17 +55,14 @@ func (s *refreshTokenStore) SetRefreshToken(url *url.URL, service string, token 
 type noopCredentialStore struct{}
 
 func (s *noopCredentialStore) Basic(url *url.URL) (string, string) {
-	glog.Infof("asked to provide Basic credentials for %s", url)
 	return "", ""
 }
 
 func (s *noopCredentialStore) RefreshToken(url *url.URL, service string) string {
-	glog.Infof("asked to provide RefreshToken for %s", url)
 	return ""
 }
 
 func (s *noopCredentialStore) SetRefreshToken(url *url.URL, service string, token string) {
-	glog.Infof("asked to provide SetRefreshToken for %s", url)
 }
 
 func NewBasicCredentials() *BasicCredentials {
@@ -92,44 +96,32 @@ func (c *BasicCredentials) Basic(url *url.URL) (string, string) {
 	return "", ""
 }
 
-func NewLocalCredentials() auth.CredentialStore {
-	return &keyringCredentialStore{
-		DockerKeyring:     credentialprovider.NewDockerKeyring(),
-		refreshTokenStore: &refreshTokenStore{},
-	}
-}
+var (
+	emptyKeyring = &credentialprovider.BasicDockerKeyring{}
+)
 
-type keyringCredentialStore struct {
-	credentialprovider.DockerKeyring
-	*refreshTokenStore
-}
-
-func (s *keyringCredentialStore) Basic(url *url.URL) (string, string) {
-	return basicCredentialsFromKeyring(s.DockerKeyring, url)
-}
-
-func NewCredentialsForSecrets(secrets []kapiv1.Secret) *SecretCredentialStore {
+func NewCredentialsForSecrets(secrets []corev1.Secret) *SecretCredentialStore {
 	return &SecretCredentialStore{
 		secrets:           secrets,
-		refreshTokenStore: &refreshTokenStore{},
+		RefreshTokenStore: NewRefreshTokenStore(),
 	}
 }
 
-func NewLazyCredentialsForSecrets(secretsFn func() ([]kapiv1.Secret, error)) *SecretCredentialStore {
+func NewLazyCredentialsForSecrets(secretsFn func() ([]corev1.Secret, error)) *SecretCredentialStore {
 	return &SecretCredentialStore{
 		secretsFn:         secretsFn,
-		refreshTokenStore: &refreshTokenStore{},
+		RefreshTokenStore: NewRefreshTokenStore(),
 	}
 }
 
 type SecretCredentialStore struct {
 	lock      sync.Mutex
-	secrets   []kapiv1.Secret
-	secretsFn func() ([]kapiv1.Secret, error)
+	secrets   []corev1.Secret
+	secretsFn func() ([]corev1.Secret, error)
 	err       error
 	keyring   credentialprovider.DockerKeyring
 
-	*refreshTokenStore
+	RefreshTokenStore
 }
 
 func (s *SecretCredentialStore) Basic(url *url.URL) (string, string) {

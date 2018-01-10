@@ -14,7 +14,7 @@ import (
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/cache"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
-	"github.com/openshift/image-registry/pkg/origin-common/image/importer"
+	"github.com/openshift/image-registry/pkg/origin-common/image/registryclient"
 )
 
 // BlobGetterService combines the operations to access and read blobs.
@@ -152,7 +152,7 @@ func (rbgs *remoteBlobGetterService) ServeBlob(ctx context.Context, w http.Respo
 // rbgs.digestToStore saves the store.
 func (rbgs *remoteBlobGetterService) proxyStat(
 	ctx context.Context,
-	retriever importer.RepositoryRetriever,
+	retriever registryclient.RepositoryRetriever,
 	spec *imagePullthroughSpec,
 	dgst digest.Digest,
 ) (distribution.Descriptor, error) {
@@ -210,7 +210,7 @@ func (rbgs *remoteBlobGetterService) findCandidateRepository(
 	search map[string]imagePullthroughSpec,
 	cachedRepos []string,
 	dgst digest.Digest,
-	retriever importer.RepositoryRetriever,
+	retriever registryclient.RepositoryRetriever,
 ) (distribution.Descriptor, error) {
 	// no possible remote locations to search, exit early
 	if len(search) == 0 {
