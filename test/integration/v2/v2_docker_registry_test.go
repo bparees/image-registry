@@ -18,8 +18,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
-	imageclient "github.com/openshift/origin/pkg/image/generated/internalclientset"
+	imageapiv1 "github.com/openshift/api/image/v1"
+	//imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
+	//imageclient "github.com/openshift/origin/pkg/image/generated/internalclientset"
+	imageclientv1 "github.com/openshift/client-go/image/clientset/versioned/typed/image/v1"
 
 	registryutil "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
 	"github.com/openshift/image-registry/pkg/testframework"
@@ -96,15 +99,15 @@ func TestV2RegistryGetTags(t *testing.T) {
 
 	baseURL := registry.BaseURL()
 
-	adminImageClient := imageclient.NewForConfigOrDie(master.AdminKubeConfig())
+	adminImageClient := imageclientv1.NewForConfigOrDie(master.AdminKubeConfig())
 
-	stream := imageapi.ImageStream{
+	stream := imageapiv1.ImageStream{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      "test",
 		},
 	}
-	if _, err := adminImageClient.ImageStreams(namespace).Create(&stream); err != nil {
+	if _, err := adminimageclientv1.ImageStreams(namespace).Create(&stream); err != nil {
 		t.Fatalf("error creating image stream: %s", err)
 	}
 
@@ -196,7 +199,7 @@ func TestV2RegistryGetTags(t *testing.T) {
 		t.Fatalf("unexpected manifest tag: %s", retrievedManifest.Tag)
 	}
 
-	image, err := adminImageClient.ImageStreamImages(namespace).Get(imageapi.JoinImageStreamImage(stream.Name, dgst.String()), metav1.GetOptions{})
+	image, err := adminimageclientv1.ImageStreamImages(namespace).Get(imageapi.JoinImageStreamImage(stream.Name, dgst.String()), metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("error getting imageStreamImage: %s", err)
 	}
@@ -214,7 +217,7 @@ func TestV2RegistryGetTags(t *testing.T) {
 	}
 
 	// test auto provisioning
-	otherStream, err := adminImageClient.ImageStreams(namespace).Get("otherrepo", metav1.GetOptions{})
+	otherStream, err := adminimageclientv1.ImageStreams(namespace).Get("otherrepo", metav1.GetOptions{})
 	t.Logf("otherStream=%#v, err=%v", otherStream, err)
 	if err == nil {
 		t.Fatalf("expected error getting otherrepo")
@@ -230,7 +233,7 @@ func TestV2RegistryGetTags(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	otherStream, err = adminImageClient.ImageStreams(namespace).Get("otherrepo", metav1.GetOptions{})
+	otherStream, err = adminimageclientv1.ImageStreams(namespace).Get("otherrepo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error getting otherrepo: %s", err)
 	}

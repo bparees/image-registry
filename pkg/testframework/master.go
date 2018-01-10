@@ -24,7 +24,8 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/openshift/origin/pkg/cmd/util/tokencmd"
-	projectapiv1 "github.com/openshift/origin/pkg/project/apis/project/v1"
+	//projectapiv1 "github.com/openshift/origin/pkg/project/apis/project/v1"
+	projectapiv1 "github.com/openshift/api/project/v1"
 )
 
 type MasterContainer struct {
