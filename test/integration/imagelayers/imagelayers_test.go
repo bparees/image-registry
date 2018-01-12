@@ -48,7 +48,6 @@ func getSchema1Manifest(repo *testframework.Repository, tag string) (distributio
 //
 // The test relies on the ability of the registry to downconvert manifests.
 func TestImageLayers(t *testing.T) {
-	return
 	master := testframework.NewMaster(t)
 	defer master.Close()
 

@@ -95,7 +95,6 @@ func testPullThroughStatBlob(baseURL string, stream *imageapiv1.ImageStreamImpor
 }
 
 func TestPullThroughInsecure(t *testing.T) {
-	return
 	master := testframework.NewMaster(t)
 	defer master.Close()
 

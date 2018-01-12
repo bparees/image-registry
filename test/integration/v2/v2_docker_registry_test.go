@@ -89,7 +89,6 @@ func signedManifest(name string, blobs []digest.Digest) ([]byte, digest.Digest, 
 func TestV2RegistryGetTags(t *testing.T) {
 	master := testframework.NewMaster(t)
 	defer master.Close()
-	return
 	namespace := "namespace"
 	testuser := master.CreateUser("admin", "password")
 	master.CreateProject(namespace, testuser.Name)
