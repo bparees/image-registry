@@ -24,7 +24,7 @@ import (
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	registryconfig "github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 )
 
 func TestSignatureGet(t *testing.T) {

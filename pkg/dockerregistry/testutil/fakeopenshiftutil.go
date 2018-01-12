@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	imageapiv1 "github.com/openshift/api/image/v1"
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 )
 
 // AddImageStream creates a new image stream with annotations.

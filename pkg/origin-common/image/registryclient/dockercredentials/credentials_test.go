@@ -5,9 +5,10 @@ import (
 	"reflect"
 	"testing"
 
-	"k8s.io/kubernetes/pkg/credentialprovider"
-
-	_ "github.com/openshift/origin/pkg/api/install"
+	//"k8s.io/kubernetes/pkg/credentialprovider"
+	"github.com/openshift/image-registry/pkg/kubernetes-common/credentialprovider"
+	// TODO - bparees - resolve this
+	//_ "github.com/openshift/origin/pkg/api/install"
 )
 
 type mockKeyring struct {

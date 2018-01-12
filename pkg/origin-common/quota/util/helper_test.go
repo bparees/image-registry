@@ -6,9 +6,10 @@ import (
 
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	kapi "k8s.io/kubernetes/pkg/apis/core"
+	//kapi "k8s.io/kubernetes/pkg/apis/core"
 
-	imageapi "github.com/openshift/origin/pkg/image/apis/image"
+	imageapiv1 "github.com/openshift/api/image/v1"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 )
 
 // TestIsErrorQuotaExceeded verifies that if a resource exceedes allowed usage, the admission will return
@@ -33,7 +34,7 @@ func TestIsErrorQuotaExceeded(t *testing.T) {
 		},
 		{
 			name: "unrelated forbidden error",
-			err:  kerrors.NewForbidden(kapi.Resource("imageStreams"), "is", errors.New("unrelated")),
+			err:  kerrors.NewForbidden(imageapiv1.Resource("imageStreams"), "is", errors.New("unrelated")),
 		},
 		{
 			name: "unrelated invalid error",
@@ -58,12 +59,12 @@ func TestIsErrorQuotaExceeded(t *testing.T) {
 		},
 		{
 			name:        "quota exceeded error",
-			err:         kerrors.NewForbidden(kapi.Resource("imageStream"), "is", errors.New(errQuotaMessageString)),
+			err:         kerrors.NewForbidden(imageapiv1.Resource("imageStream"), "is", errors.New(errQuotaMessageString)),
 			shouldMatch: true,
 		},
 		{
 			name:        "quota unknown error",
-			err:         kerrors.NewForbidden(kapi.Resource("imageStream"), "is", errors.New(errQuotaUnknownMessageString)),
+			err:         kerrors.NewForbidden(imageapiv1.Resource("imageStream"), "is", errors.New(errQuotaUnknownMessageString)),
 			shouldMatch: true,
 		},
 		{
@@ -112,7 +113,7 @@ func TestIsErrorLimitExceeded(t *testing.T) {
 		},
 		{
 			name: "unrelated forbidden error",
-			err:  kerrors.NewForbidden(kapi.Resource("imageStreams"), "is", errors.New("unrelated")),
+			err:  kerrors.NewForbidden(imageapiv1.Resource("imageStreams"), "is", errors.New("unrelated")),
 		},
 		{
 			name: "unrelated invalid error",
@@ -137,11 +138,11 @@ func TestIsErrorLimitExceeded(t *testing.T) {
 		},
 		{
 			name: "quota exceeded error",
-			err:  kerrors.NewForbidden(kapi.Resource("imageStream"), "is", errors.New(errQuotaMessageString)),
+			err:  kerrors.NewForbidden(imageapiv1.Resource("imageStream"), "is", errors.New(errQuotaMessageString)),
 		},
 		{
 			name: "quota unknown error",
-			err:  kerrors.NewForbidden(kapi.Resource("imageStream"), "is", errors.New(errQuotaUnknownMessageString)),
+			err:  kerrors.NewForbidden(imageapiv1.Resource("imageStream"), "is", errors.New(errQuotaUnknownMessageString)),
 		},
 		{
 			name:        "limits exceeded error with forbidden reason",
