@@ -25,7 +25,7 @@ type DockerImage struct {
 	Size            int64         `json:"Size,omitempty"`
 }
 
-// TODO Do we need a real DeepCopyObject implementation for the internal DockerImage struct?
+// TODO - bparees - Do we need a real DeepCopyObject implementation for the internal DockerImage struct?
 func (*DockerImage) DeepCopyObject() runtime.Object {
 	return nil
 }

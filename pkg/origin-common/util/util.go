@@ -38,7 +38,7 @@ func ImageWithMetadata(image *imageapiv1.Image) error {
 			return err
 		}
 	*/
-
+	// TODO - bparees - should probably be using a scheme to decode this?
 	if err := json.Unmarshal(image.DockerImageMetadata.Raw, obj); err != nil {
 		return err
 	}

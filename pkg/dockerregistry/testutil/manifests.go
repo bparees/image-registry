@@ -265,7 +265,7 @@ func AssertManifestsEqual(t *testing.T, description string, ma distribution.Mani
 // NewImageForManifest creates a new Image object for the given manifest string. Note that the manifest must
 // contain signatures if it is of schema 1.
 func NewImageForManifest(repoName string, rawManifest string, manifestConfig string, managedByOpenShift bool) (*imageapiv1.Image, error) {
-	// TODO fix ImageWithMetadata usage and re-enable
+	// TODO - bparees - fix ImageWithMetadata usage and re-enable
 	return &imageapiv1.Image{}, nil
 	/*
 		var versioned manifest.Versioned

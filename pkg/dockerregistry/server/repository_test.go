@@ -520,7 +520,7 @@ func storeTestImage(
 	schemaVersion int,
 	managedByOpenShift bool,
 ) (*imageapiv1.Image, error) {
-	// TODO fix ImageWithMetadata usage and re-enable
+	// TODO - bparees - fix ImageWithMetadata usage and re-enable
 	return &imageapiv1.Image{}, nil
 
 	/*
