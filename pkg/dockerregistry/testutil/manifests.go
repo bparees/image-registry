@@ -24,7 +24,7 @@ import (
 	imageapiv1 "github.com/openshift/api/image/v1"
 	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 	//"github.com/openshift/origin/pkg/image/util"
-	//	util "github.com/openshift/image-registry/pkg/origin-common/util"
+	util "github.com/openshift/image-registry/pkg/origin-common/util"
 	// install image API for k8s.io/kubernetes/pkg/api.Scheme.Converter
 	// TODO - bparees - resolve this
 	//_ "github.com/openshift/origin/pkg/image/apis/image/install"
@@ -267,43 +267,43 @@ func AssertManifestsEqual(t *testing.T, description string, ma distribution.Mani
 func NewImageForManifest(repoName string, rawManifest string, manifestConfig string, managedByOpenShift bool) (*imageapiv1.Image, error) {
 	// TODO - bparees - fix ImageWithMetadata usage and re-enable
 	return &imageapiv1.Image{}, nil
-	/*
-		var versioned manifest.Versioned
-		if err := json.Unmarshal([]byte(rawManifest), &versioned); err != nil {
-			return nil, err
-		}
 
-		_, desc, err := distribution.UnmarshalManifest(versioned.MediaType, []byte(rawManifest))
-		if err != nil {
-			return nil, err
-		}
+	var versioned manifest.Versioned
+	if err := json.Unmarshal([]byte(rawManifest), &versioned); err != nil {
+		return nil, err
+	}
 
-		annotations := make(map[string]string)
-		if managedByOpenShift {
-			annotations[imageapi.ManagedByOpenShiftAnnotation] = "true"
-		}
+	_, desc, err := distribution.UnmarshalManifest(versioned.MediaType, []byte(rawManifest))
+	if err != nil {
+		return nil, err
+	}
 
-		img := imageapiv1.Image{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        desc.Digest.String(),
-				Annotations: annotations,
-			},
-			DockerImageReference: fmt.Sprintf("localhost:5000/%s@%s", repoName, desc.Digest.String()),
-			DockerImageManifest:  rawManifest,
-			DockerImageConfig:    manifestConfig,
-		}
-		if err := util.ImageWithMetadata(&img); err != nil {
-			return nil, err
-		}
-		newImage := imageapiv1.Image{}
-		if err := corev1.Scheme.Converter().Convert(&img, &newImage, 0, nil); err != nil {
-			return nil, err
-		}
+	annotations := make(map[string]string)
+	if managedByOpenShift {
+		annotations[imageapi.ManagedByOpenShiftAnnotation] = "true"
+	}
 
-		if err := util.ImageWithMetadata(&newImage); err != nil {
-			return nil, fmt.Errorf("failed to fill image with metadata: %v", err)
-		}
+	img := imageapiv1.Image{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        desc.Digest.String(),
+			Annotations: annotations,
+		},
+		DockerImageReference: fmt.Sprintf("localhost:5000/%s@%s", repoName, desc.Digest.String()),
+		DockerImageManifest:  rawManifest,
+		DockerImageConfig:    manifestConfig,
+	}
+	if err := util.InternalImageWithMetadata(&img); err != nil {
+		return nil, err
+	}
+	newImage := imageapiv1.Image{}
+	if err := corev1.Scheme.Converter().Convert(&img, &newImage, 0, nil); err != nil {
+		return nil, err
+	}
 
-		return &newImage, nil
-	*/
+	if err := util.ImageWithMetadata(&newImage); err != nil {
+		return nil, fmt.Errorf("failed to fill image with metadata: %v", err)
+	}
+
+	return &newImage, nil
+
 }

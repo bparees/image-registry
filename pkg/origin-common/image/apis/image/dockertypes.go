@@ -2,7 +2,6 @@ package image
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -23,11 +22,6 @@ type DockerImage struct {
 	Config          *DockerConfig `json:"Config,omitempty"`
 	Architecture    string        `json:"Architecture,omitempty"`
 	Size            int64         `json:"Size,omitempty"`
-}
-
-// TODO - bparees - Do we need a real DeepCopyObject implementation for the internal DockerImage struct?
-func (*DockerImage) DeepCopyObject() runtime.Object {
-	return nil
 }
 
 // DockerConfig is the list of configuration options used when creating a container.

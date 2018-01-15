@@ -16,12 +16,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	restclient "k8s.io/client-go/rest"
 
+	dockerapiv10 "github.com/openshift/api/image/docker10"
 	imageapiv1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/audit"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/cache"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/metrics"
-	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
 	quotautil "github.com/openshift/image-registry/pkg/origin-common/quota/util"
 	util "github.com/openshift/image-registry/pkg/origin-common/util"
 )
@@ -348,7 +348,7 @@ func (r *repository) rememberLayersOfImage(image *imageapiv1.Image, cacheName st
 				MediaType: layer.MediaType,
 			})
 		}
-		meta, ok := image.DockerImageMetadata.Object.(*imageapi.DockerImage)
+		meta, ok := image.DockerImageMetadata.Object.(*dockerapiv10.DockerImage)
 		if !ok {
 			context.GetLogger(r.ctx).Errorf("image does not have metadata %s", image.Name)
 			return
