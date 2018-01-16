@@ -1,9 +1,9 @@
 package server
 
 import (
-	//	"bytes"
+	"bytes"
 	"fmt"
-	//	"io"
+	"io"
 	"reflect"
 	"strings"
 	"testing"
@@ -13,13 +13,13 @@ import (
 	dockercfg "github.com/docker/distribution/configuration"
 	"github.com/docker/distribution/context"
 	"github.com/docker/distribution/digest"
-	//	"github.com/docker/distribution/manifest"
-	//	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/manifest"
+	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/storage"
 	"github.com/docker/distribution/registry/storage/driver"
 	"github.com/docker/distribution/registry/storage/driver/inmemory"
-	//	"github.com/docker/libtrust"
+	"github.com/docker/libtrust"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/diff"
@@ -31,8 +31,8 @@ import (
 	registryclient "github.com/openshift/image-registry/pkg/dockerregistry/server/client"
 	"github.com/openshift/image-registry/pkg/dockerregistry/server/configuration"
 	registrytest "github.com/openshift/image-registry/pkg/dockerregistry/testutil"
-	//	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
-	//	"github.com/openshift/origin/pkg/image/util"
+	imageapi "github.com/openshift/image-registry/pkg/origin-common/image/apis/image"
+	"github.com/openshift/image-registry/pkg/origin-common/util"
 )
 
 const (
@@ -88,7 +88,7 @@ func TestRepositoryBlobStat(t *testing.T) {
 		name    string
 		managed bool
 	}{{"nm/is", true}, {"registry.org:5000/user/app", false}} {
-		img, err := registrytest.NewImageForManifest(d.name, registrytest.SampleImageManifestSchema1, "", d.managed)
+		img, err := registrytest.NewImageForManifest(t, d.name, registrytest.SampleImageManifestSchema1, "", d.managed)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -521,121 +521,130 @@ func storeTestImage(
 	managedByOpenShift bool,
 ) (*imageapiv1.Image, error) {
 	// TODO - bparees - fix ImageWithMetadata usage and re-enable
-	return &imageapiv1.Image{}, nil
+	//return &imageapiv1.Image{}, nil
 
-	/*
-		repo, err := reg.Repository(ctx, imageReference)
-		if err != nil {
-			return nil, fmt.Errorf("unexpected error getting repo %q: %v", imageReference.Name(), err)
-		}
+	repo, err := reg.Repository(ctx, imageReference)
+	if err != nil {
+		return nil, fmt.Errorf("unexpected error getting repo %q: %v", imageReference.Name(), err)
+	}
 
-		var (
-			m  distribution.Manifest
-			m1 schema1.Manifest
-		)
-		switch schemaVersion {
-		case 1:
-			m1 = schema1.Manifest{
-				Versioned: manifest.Versioned{
-					SchemaVersion: 1,
-				},
-				Name: imageReference.Name(),
-				Tag:  imageReference.Tag(),
-			}
-		case 2:
-			// TODO
-			fallthrough
-		default:
-			return nil, fmt.Errorf("unsupported manifest version %d", schemaVersion)
-		}
-
-		for i := 0; i < testImageLayerCount; i++ {
-			payload, err := registrytest.CreateRandomTarFile()
-			if err != nil {
-				return nil, fmt.Errorf("unexpected error generating test layer file: %v", err)
-			}
-
-			wr, err := repo.Blobs(ctx).Create(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("unexpected error creating test upload: %v", err)
-			}
-			defer wr.Close()
-
-			n, err := io.Copy(wr, bytes.NewReader(payload))
-			if err != nil {
-				return nil, fmt.Errorf("unexpected error copying to upload: %v", err)
-			}
-
-			dgst := digest.FromBytes(payload)
-
-			if schemaVersion == 1 {
-				m1.FSLayers = append(m1.FSLayers, schema1.FSLayer{BlobSum: dgst})
-				m1.History = append(m1.History, schema1.History{V1Compatibility: fmt.Sprintf(`{"size":%d}`, n)})
-			} // TODO v2
-
-			if _, err := wr.Commit(ctx, distribution.Descriptor{Digest: dgst, MediaType: schema1.MediaTypeManifestLayer}); err != nil {
-				return nil, fmt.Errorf("unexpected error finishing upload: %v", err)
-			}
-		}
-
-		var dgst digest.Digest
-		var payload []byte
-
-		if schemaVersion == 1 {
-			pk, err := libtrust.GenerateECP256PrivateKey()
-			if err != nil {
-				return nil, fmt.Errorf("unexpected error generating private key: %v", err)
-			}
-
-			m, err = schema1.Sign(&m1, pk)
-			if err != nil {
-				return nil, fmt.Errorf("error signing manifest: %v", err)
-			}
-
-			_, payload, err = m.Payload()
-			if err != nil {
-				return nil, fmt.Errorf("error getting payload %#v", err)
-			}
-
-			dgst = digest.FromBytes(payload)
-		} //TODO v2
-
-		image := &imageapi.Image{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: dgst.String(),
+	var (
+		m  distribution.Manifest
+		m1 schema1.Manifest
+	)
+	switch schemaVersion {
+	case 1:
+		m1 = schema1.Manifest{
+			Versioned: manifest.Versioned{
+				SchemaVersion: 1,
 			},
-			DockerImageManifest:  string(payload),
-			DockerImageReference: imageReference.Name() + "@" + dgst.String(),
+			Name: imageReference.Name(),
+			Tag:  imageReference.Tag(),
+		}
+	case 2:
+		// TODO
+		fallthrough
+	default:
+		return nil, fmt.Errorf("unsupported manifest version %d", schemaVersion)
+	}
+
+	for i := 0; i < testImageLayerCount; i++ {
+		payload, err := registrytest.CreateRandomTarFile()
+		if err != nil {
+			return nil, fmt.Errorf("unexpected error generating test layer file: %v", err)
 		}
 
-		if managedByOpenShift {
-			image.Annotations = map[string]string{imageapi.ManagedByOpenShiftAnnotation: "true"}
+		wr, err := repo.Blobs(ctx).Create(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unexpected error creating test upload: %v", err)
 		}
+		defer wr.Close()
+
+		n, err := io.Copy(wr, bytes.NewReader(payload))
+		if err != nil {
+			return nil, fmt.Errorf("unexpected error copying to upload: %v", err)
+		}
+
+		dgst := digest.FromBytes(payload)
 
 		if schemaVersion == 1 {
-			signedManifest := m.(*schema1.SignedManifest)
-			signatures, err := signedManifest.Signatures()
-			if err != nil {
-				return nil, err
-			}
+			m1.FSLayers = append(m1.FSLayers, schema1.FSLayer{BlobSum: dgst})
+			m1.History = append(m1.History, schema1.History{V1Compatibility: fmt.Sprintf(`{"size":%d}`, n)})
+		} // TODO v2
 
-			image.DockerImageSignatures = append(image.DockerImageSignatures, signatures...)
+		if _, err := wr.Commit(ctx, distribution.Descriptor{Digest: dgst, MediaType: schema1.MediaTypeManifestLayer}); err != nil {
+			return nil, fmt.Errorf("unexpected error finishing upload: %v", err)
+		}
+	}
+
+	var dgst digest.Digest
+	var payload []byte
+
+	if schemaVersion == 1 {
+		pk, err := libtrust.GenerateECP256PrivateKey()
+		if err != nil {
+			return nil, fmt.Errorf("unexpected error generating private key: %v", err)
 		}
 
-		if err := util.ImageWithMetadata(image); err != nil {
+		m, err = schema1.Sign(&m1, pk)
+		if err != nil {
+			return nil, fmt.Errorf("error signing manifest: %v", err)
+		}
+
+		_, payload, err = m.Payload()
+		if err != nil {
+			return nil, fmt.Errorf("error getting payload %#v", err)
+		}
+
+		dgst = digest.FromBytes(payload)
+	} //TODO v2
+
+	image := &imageapi.Image{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: dgst.String(),
+		},
+		DockerImageManifest:  string(payload),
+		DockerImageReference: imageReference.Name() + "@" + dgst.String(),
+	}
+
+	if managedByOpenShift {
+		image.Annotations = map[string]string{imageapi.ManagedByOpenShiftAnnotation: "true"}
+	}
+
+	if schemaVersion == 1 {
+		signedManifest := m.(*schema1.SignedManifest)
+		signatures, err := signedManifest.Signatures()
+		if err != nil {
 			return nil, err
 		}
-		newImage := imageapiv1.Image{}
+
+		image.DockerImageSignatures = append(image.DockerImageSignatures, signatures...)
+	}
+
+	if err := util.InternalImageWithMetadata(image); err != nil {
+		return nil, err
+	}
+	newImage := imageapiv1.Image{}
+
+	for _, layer := range image.DockerImageLayers {
+		newImage.DockerImageLayers = append(newImage.DockerImageLayers, imageapiv1.ImageLayer{
+			Name:      layer.Name,
+			LayerSize: layer.LayerSize,
+			MediaType: layer.MediaType,
+		})
+	}
+
+	/*
 		if err := corev1.Scheme.Converter().Convert(image, &newImage, 0, nil); err != nil {
 			return nil, err
 		}
-
-		if err := imageapiv1.ImageWithMetadata(&newImage); err != nil {
-			return nil, fmt.Errorf("failed to fill image with metadata: %v", err)
-		}
-
-		return &newImage, nil
 	*/
+	if err := util.ImageWithMetadata(&newImage); err != nil {
+		return nil, fmt.Errorf("failed to fill image with metadata: %v", err)
+	}
+
+	return &newImage, nil
+
 }
 
 func populateTestStorage(

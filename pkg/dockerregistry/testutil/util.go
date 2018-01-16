@@ -203,7 +203,7 @@ func CreateRandomImage(namespace, name string) (*imageapiv1.Image, error) {
 		return nil, err
 	}
 
-	return NewImageForManifest(
+	return NewImageForManifest(nil,
 		fmt.Sprintf("%s/%s", namespace, name),
 		string(manifestSchema1),
 		"",

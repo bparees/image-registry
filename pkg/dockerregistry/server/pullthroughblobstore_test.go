@@ -36,7 +36,7 @@ func TestPullthroughServeBlob(t *testing.T) {
 		&fakeBlobDescriptorServiceMiddleware{t: t, respectPassthrough: true},
 	})
 
-	testImage, err := registrytest.NewImageForManifest(repoName, registrytest.SampleImageManifestSchema1, "", false)
+	testImage, err := registrytest.NewImageForManifest(t, repoName, registrytest.SampleImageManifestSchema1, "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,6 +157,7 @@ func TestPullthroughServeBlob(t *testing.T) {
 
 		dgst := digest.Digest(tc.blobDigest)
 
+		t.Logf("Checking store %#v and repo %#v for digest %#v\n", ptbs.BlobStore, ptbs.repo, dgst)
 		_, err = ptbs.Stat(ctx, dgst)
 		if err != tc.expectedStatError {
 			t.Errorf("[%s] Stat returned unexpected error: %#+v != %#+v", tc.name, err, tc.expectedStatError)
@@ -346,18 +347,21 @@ func TestPullthroughServeBlobInsecure(t *testing.T) {
 	}
 	t.Logf("m2dgst=%s, m2manifest: %s", m2dgst, m2canonical)
 
-	m1img, err := registrytest.NewImageForManifest(repo1Name, string(m1payload), m1cfg, false)
+	m1img, err := registrytest.NewImageForManifest(t, repo1Name, string(m1payload), m1cfg, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 	m1img.DockerImageReference = fmt.Sprintf("%s/%s/%s@%s", serverURL.Host, namespace, repo1, m1img.Name)
 	m1img.DockerImageManifest = ""
-	m2img, err := registrytest.NewImageForManifest(repo2Name, string(m2payload), m2cfg, false)
+	t.Logf("m1img=%#v", m1img)
+
+	m2img, err := registrytest.NewImageForManifest(t, repo2Name, string(m2payload), m2cfg, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 	m2img.DockerImageReference = fmt.Sprintf("%s/%s/%s@%s", serverURL.Host, namespace, repo2, m2img.Name)
 	m2img.DockerImageManifest = ""
+	t.Logf("m2img=%#v", m2img)
 
 	for _, tc := range []struct {
 		name                       string
