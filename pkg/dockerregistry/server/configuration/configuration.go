@@ -325,6 +325,10 @@ func getServerAddr(options configuration.Parameters, cfgValue string) (registryA
 	var found bool
 
 	if len(registryAddr) == 0 {
+		registryAddr, _ = os.LookupEnv("REGISTRY_OPENSHIFT_SERVER_ADDR")
+	}
+
+	if len(registryAddr) == 0 {
 		registryAddr, found = os.LookupEnv(openShiftDefaultRegistryEnvVar)
 		if found {
 			log.Infof("DEPRECATED: %q is deprecated, use the 'REGISTRY_OPENSHIFT_SERVER_ADDR' instead", openShiftDefaultRegistryEnvVar)
